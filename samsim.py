@@ -1,21 +1,33 @@
+""" This is the first coding project I ever did, a simple text adventure game. It was mainly intended
+for friends, hence some of the weird inside jokes. I may update it later and 
+turn it into an actual game (that takes place in multiple rooms!) if I'm motivated enough, but no plans right now. 
+I do plan on updating it to Python 3 though. 
+Feel free to comment on the structure of the code, I don't know if this is a good, sturdy format or not. 
+Executable can be found here: https://www.dropbox.com/sh/i67anpv3xecxgp9/AAAEhP0SrpZO_u1fnnjDviKra?dl=0"""
+
+# TODO List: Convert to Python 3, add code for culling extra spaces in input string, define item subclasses to make
+# adding new items easier. 
+
+# Content roadmap: Expand sim to include entire house, create puzzles and an endgoal.
+
+
 # -*- coding: cp1252 -*-
-#imports
+# imports
 from random import randint
 import time
-import textwrap
-#formatting
+import textwrap # or formatting
+# formatting
 """I was going to try and use a textwrapper class here
 so it could apply to the whole program but I couldn't get it to work.
 Instead I just used textwrap to wrap all instances of print individually,
 which ended up making the code a little messier but it gets the job done."""
-#gamestate variables
+# Gamestate variables
 game_active = True
 in_bed = True
 alarm_on = True
 jump_count = 0
-alarm_on = True
-localtime = time.asctime( time.localtime(time.time()) )
-# introduction
+local_time = time.asctime( time.localtime(time.time()) )
+# Introduction
 
 print textwrap.fill('Welcome to Sam Simulator 2015, the next generation in Sam '
     'simulation technology. This is a text adventure game, so to control '
@@ -42,7 +54,10 @@ class Item(object):
         self.poke_msg = poke_msg
         self.can_read = can_read
         self.read_msg = read_msg
-
+        
+# It probably would be easier in the long term to create subclasses for different kinds of items so I
+# didn't have to write False, None to fill every parameter every time, but this is the way I did it. 
+# Storing item descriptions
 self = Item("self", "me","You're wearing wrinkled clothes and could probably use a shower. Hair status: Touseled. Head "
             "Status: Aching.", "You punch yourself in the face. It hurts very badly "
             "and you immediately regret it.", "You poke your head. Yep, still hurts.", False, None)
@@ -50,7 +65,7 @@ cat = Item("cat", "kitty", "A black-and-brown Cat sleeping happily. It even slep
            "Come on, man.",
            "You poke the Cat. It doesn't +seem to mind, or even notice.", False, None)
 clock = Item("clock", "alarm", "An alarm Clock. Still blaring obnoxiously.", "The Clock makes a slight crunching noise and goes silent. That felt good.", "You poke the "
-             "Clock. The current time is %s." % localtime, True, "The current time is %s." % localtime) 
+             "Clock. The current time is %s." % local_time, True, "The current time is %s." % local_time) 
 desk = Item("desk", "desk", "A simple wooden Desk. Holds four books: Wuthering Heights, Fight Club, Alice In Wonderland, and Fahrenheit 451.", "You hit the Desk."
             " Apart from bruising your knuckles, this accomplishes absolutely nothing.", "You poke the Desk. The Desk just sits there, mocking you.", False, None)
 computer = Item("computer", "pc", "A stylish black personal Computer. It's not working right now.", "Violence is not the answer.", "You poke the Computer. "
@@ -75,7 +90,7 @@ fan = Item("fan", "fan", "Your biggest Fan. Supplies cool air 7 days a week, 365
            "running. Great idea.", False, None)
 bed = Item("bed", "bed", "Ah, Bed. It's always been there for you.", "You hit the Bed lovingly. You and this Bed go waaaaay back.", "You poke the Bed. Firm, "
            "yet supple.", False, None)
-wuthering_heights = Item("wuthering_heights", "wh", "Emily Brontë's acclaimed 19th century romantic novel.", "Hey, quit it. Books don't grow on trees.",
+wuthering_heights = Item("wuthering_heights", "wh", "Emily BrontÃ«'s acclaimed 19th century romantic novel.", "Hey, quit it. Books don't grow on trees.",
                          "You poke the book. It books bookily.", True, "You read the book. It was pretty dry, but it had its moments.")
 fahrenheit_451 = Item("fahrenheit_451", "f451", "The quintessential dystopian science fiction novel.", "Come on man, that's a classic.", "You poke the book."
                       " It's not as hot as the title lead you to believe.", True, "You read the book. It was excellent, but all of a sudden you have "
@@ -85,7 +100,7 @@ alice_in_wonderland = Item("alice_in_wonderland", "aiw", "Lewis Carroll's surrea
 fight_club = Item("fight_club", "fc", "I would describe it, but I'm pretty sure that's against the rules.",
                   "You hit the book. I think you're taking this whole \"Fight Club\" thing too literally.",
                   "You poke the book. It gives you a paper cut. Ow.", True, "You have absolutely no idea what you just read, but you're pretty sure you enjoyed it.")
-#hints, determined by randint
+# hints, determined by randint
 hints = ["Try using actions on Self.", "You can only interact with objects that start with Capital Letters.", "Don't mess with the cat.", "Try performing all "
         "the actions on all the objects.", "Examine the Desk to find out what the books are called.", "The only commands that work are "
          "[action] and [action object].", "If you want, you can abbreviate the names of the books as the first letter of every word. For example, "
@@ -94,14 +109,13 @@ hints = ["Try using actions on Self.", "You can only interact with objects that 
          "you Get Up.", "You can only read books.", "There are numerous easter eggs in this program, but some of them are harder to find than others.",
          "Jumping is super annoying."]
 
-#item parameters: (name, altname, description, hit_message, poke_message, can_read, read_message)
+# item parameters: (name, altname, description, hit_message, poke_message, can_read, read_message)
 
 item_list = [self, room, cat, clock, desk, computer, window, chair, table, fan, bed, wuthering_heights, fahrenheit_451,
              alice_in_wonderland, fight_club,]
 
 
-
-#jumping
+# jumping
 def jump():
     global jump_count
     jump_count += 1
@@ -156,12 +170,20 @@ def jump():
         print "Jump count: " + str(jump_count)
     print
 
-#game loop
+# Game loop, where the magic happens. I don't know if there's a better way to do it, but I used a series of
+# if/elif/else statements to determine which command is accepted.
 while game_active == True:
-    localtime = time.asctime( time.localtime(time.time()) )
-    action = raw_input(">").lower() #converts all input to lowercase so it's easier to process
-    action = action.replace(" ", "_") #replaces all spaces in input with underscores so that objects can be identified properly
-    #high priority stuff
+    local_time = time.asctime( time.localtime(time.time()) )
+    action = raw_input(">").lower() # converting all input to lowercase makes it easier to process
+    action = action.replace(" ", "_") # replaces all spaces in input with underscores so that objects can be identified properly
+    
+    # TODO: Add code here which culls unnecessary spaces within the action string, so that 
+    # input like " hints" or "examine  " don't fail.
+    # Possible solution: if action[0] or action [-1] are _:
+                               # remove all _'s before or after the entry.
+    # Problem is, I can't think of a good way to do that. I'll figure it out if I ever work on it again.
+    
+    # High priority stuff
     if "help" in action or action == "?" or "command" in action or "action" in action:
         output = ("Type an action and press Enter to perform it. \n"
                "List of available actions: \nExamine [object], \nHit [object], \n"
@@ -182,7 +204,7 @@ while game_active == True:
         output = ("The items you can interact with are Self, Room, Cat, Clock, Desk, Computer, Window, Chair, Table, Fan, Bed, Wuthering Heights, Fahrenheit 451, "
         "Alice In Wonderland, and Fight Club. Books can be abbreviated, for example \"WH\" and \"F451\" can be used in place of \"Wuthering Heights and "
                   "\"Fahrenheit 451\".")
-    #examine
+    # Examine
     elif "examine" in action or "look at" in action or "look" in action:
         if action == "examine" or action == "examine_room" or action == "look room" or action == "look_at_room" or action == "look":
             output = room.desc
@@ -198,14 +220,14 @@ while game_active == True:
     elif action == "jump":
         jump()
         continue
-    #profanity net. I had to place this here or otherwise saying "Shit" would trip the "Hit" if and lead to confusion.
+    # Profanity net. I had to place this here or otherwise saying "Shit" would trip the "Hit" condition and lead to confusion.
     elif "fuck" in action or "bitch" in action or "dick" in action or "piss" in action or "damn" in action or "shit" in action:
-        #had to place this here or "u fuckin know it" would trip the profanity net.
+        # Had to place this here or "u fuckin know it" would trip the profanity net.
         if action == "u_fuckin_know_it" or action == "u_fuckin'_know_it" or action == "u_fucking_know_it" or action == "you_fuckin_know_it":
             output = "ayy"
         else:
             output = "I don't appreciate the vulgarities."
-    #hit
+    # Hit
     elif "hit" in action or "smash" in action:
         if action == "hit":
             output = "Hit what?"
@@ -224,12 +246,12 @@ while game_active == True:
                  else:
                      output = "That's not a valid object."
                      break
-    #read
+    # Read
     elif "read" in action:
         if action == "read":
             output = "Read what?"
         elif "clock" in action or "alarm" in action:
-            clock.read_msg = "You read the Clock. The current time is %s." % localtime
+            clock.read_msg = "You read the Clock. The current time is %s." % local_time
             output = clock.read_msg
         else:
             for item in item_list:
@@ -243,19 +265,19 @@ while game_active == True:
                 else:
                     output = "That's not a valid object."
                     break
-    #get up and lie down
+    # Get up and lie down
     elif action == "get_up" or action == "getup" and not in_bed:
         output = "You are already up."
     elif action == "lie_down" or action == "liedown":
         if in_bed == False:
             output = "You lie down. Oh man, Beds are awesome. Whoever invented Beds deserves like three raises."
             in_bed = True
-    #poke
+    # Poke
     elif "poke" in action or "touch" in action:
         if action == "poke":
             output = "Poke what?"
         elif "clock" in action or "alarm" in action:
-           clock.poke_msg = "You poke the Clock. The current time is %s." % localtime
+           clock.poke_msg = "You poke the Clock. The current time is %s." % local_time
            output = clock.poke_msg
         else:
             for item in item_list:
@@ -266,7 +288,7 @@ while game_active == True:
                 else:
                     output = "That's not a valid object."
                     break
-    #inside jokes / easter eggs
+    # Inside jokes / easter eggs
     elif "swag" in action:
         output = "SWAG SWAG SWAG"
     elif (action == "but_i_love_my_favorite_anime" or action == "but_i_love_my_favorite_anime!" or action == "but_i_love_my_favourite_anime" or
@@ -310,7 +332,7 @@ while game_active == True:
         output = "Okay."
     elif action == "pet_cat" or action == "pet_kitty":
         output = "You pet the cat. It purrs happily but doesn't wake up."
-    # Smite VGS!
+    # Smite VGS! http://smite.gamepedia.com/Voice_Guided_System
     elif action == "veg":
         output = "I'm the greatest!"
     elif action == "vew":
@@ -358,5 +380,5 @@ while game_active == True:
     else:
         output =  "I don't understand your command."
     print
-    print textwrap.fill(output, width=75)
+    print textwrap.fill(output, width=75) # Once output is determined it's printed here, and the loop begins again.
     print
