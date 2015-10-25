@@ -1,11 +1,11 @@
-""" This is the first coding project I ever did, a simple text adventure game. It was mainly intended
+''' This is the first coding project I ever did, a simple text adventure game. It was mainly intended
 for friends, hence some of the weird inside jokes. I may update it later and 
 turn it into an actual game (that takes place in multiple rooms!) if I'm motivated enough, but no plans right now. 
 I do plan on updating it to Python 3 though. 
 Feel free to comment on the structure of the code, I don't know if this is a good, sturdy format or not. 
-Executable can be found here: https://www.dropbox.com/sh/i67anpv3xecxgp9/AAAEhP0SrpZO_u1fnnjDviKra?dl=0"""
+A (probably outdated) executable can be found here: https://www.dropbox.com/sh/i67anpv3xecxgp9/AAAEhP0SrpZO_u1fnnjDviKra?dl=0'''
 
-# TODO List: Convert to Python 3, add code for culling extra spaces in input string, define item subclasses to make
+# TODO List: Add code for culling extra spaces in input string, define item subclasses to make
 # adding new items easier. 
 
 # Content roadmap: Expand sim to include entire house, create puzzles and an endgoal.
@@ -17,33 +17,35 @@ from random import randint
 import time
 import textwrap # or formatting
 # formatting
-"""I was going to try and use a textwrapper class here
+'''I was going to try and use a textwrapper class here
 so it could apply to the whole program but I couldn't get it to work.
 Instead I just used textwrap to wrap all instances of print individually,
-which ended up making the code a little messier but it gets the job done."""
+which ended up making the code a little messier but it gets the job done.'''
 # Gamestate variables
 game_active = True
 in_bed = True
 alarm_on = True
 jump_count = 0
 local_time = time.asctime( time.localtime(time.time()) )
+case_messages = 0
 # Introduction
 
-print textwrap.fill('Welcome to Sam Simulator 2015, the next generation in Sam '
+print(textwrap.fill('Welcome to Sam Simulator 2015, the next generation in Sam '
     'simulation technology. This is a text adventure game, so to control '
     'your Sam you must type an action into the console and press Enter. For example, saying Jump will cause your Sam to jump, and saying Examine Bed will'
     ' examine the bed. There is no need to move, once you\'re out of bed you can interact with any object in the room. '
     'Just don\'t type multiple objects or actions at once, it won\'t work the way you want it to. There are no ultimate goals or puzzles to solve, '
     'just play around with whatever\'s '
-    'in the room. ', width = 75)
-print
-print textwrap.fill('For a list of '
-    'available actions, type Help or ?. For a list of interactable objects, type Objects. For a random hint, type Hint. To exit, type Quit. Have fun!', width = 75)
+    'in the room. ', width = 75))
+print()
+print(textwrap.fill('For a list of '
+    'available actions, type Commands. For a list of interactable objects, type Objects. For a random hint, type Hint. To show '
+    'this message again, type Help. To exit, type Quit. Have fun!', width = 75))
 
-print
-print textwrap.fill("You awaken from sleep. Light is shining into your Room through the Window. Your head hurts. An Alarm is going off, and you really "
-	"want to smash it. Looks like it's time to Get Up.",width = 75)
-print
+print()
+print(textwrap.fill("You awaken from sleep. Light is shining into your Room through the Window. Your head hurts. An Alarm is going off, and you really "
+	"want to smash it. Looks like it's time to Get Up.",width = 75))
+print()
 # items shit
 class Item(object):
     def __init__(self, name, altname, desc, hit_msg, poke_msg, can_read, read_msg):
@@ -119,75 +121,84 @@ item_list = [self, room, cat, clock, desk, computer, window, chair, table, fan, 
 def jump():
     global jump_count
     jump_count += 1
-    print
+    print()
     if jump_count <= 3:   
-        print textwrap.fill("You jumped. Well that was nice, wasn't it?",width=75)
+        print(textwrap.fill("You jumped. Well that was nice, wasn't it?",width = 75))
     elif jump_count <= 7:
-        print textwrap.fill("Okay, you can stop jumping now.",width=75)
+        print(textwrap.fill("Okay, you can stop jumping now.",width = 75))
     elif jump_count <= 10:
-        print textwrap.fill("Alright seriously, quit jumping. There's plenty of other things to do than jump.",width=75)
+        print(textwrap.fill("Alright seriously, quit jumping. There's plenty of other things to do than jump.",width = 75))
     elif jump_count == 11:
-        print textwrap.fill("There are some neat books on the desk over there. Sounds pretty interesting, huh?",width=75)
+        print(textwrap.fill("There are some neat books on the desk over there. Sounds pretty interesting, huh?",width = 75))
     elif jump_count == 12:
-        print textwrap.fill("But I guess jumping around is just more interesting.",width=75)
+        print(textwrap.fill("But I guess jumping around is just more interesting.",width = 75))
     elif jump_count == 13:
-        print textwrap.fill("For you.",width=75)
+        print(textwrap.fill("For you.",width = 75))
     elif jump_count == 14:
-        print textwrap.fill("It must be nice to be amused by something as simple as just jumping. It must be a simple way to live.",width=75)
+        print(textwrap.fill("It must be nice to be amused by something as simple as just jumping. It must be a simple way to live.",width = 75))
     elif jump_count == 15:
-        print textwrap.fill("What I'm saying is you're simple.",width=75)
+        print(textwrap.fill("What I'm saying is you're simple.",width = 75))
     elif jump_count == 16:
-        print textwrap.fill("But that's an insult that probably just flew right over your head, because here you are, merrily jumping up and down.",width=75)
+        print(textwrap.fill("But that's an insult that probably just flew right over your head, because here you are, merrily jumping up and down.",width = 75))
     elif jump_count == 17:
-        print textwrap.fill("Not a care in the world.",width=75)
+        print(textwrap.fill("Not a care in the world.",width = 75))
     elif jump_count == 18:
-        print textwrap.fill("Must be nice.",width=75)
+        print(textwrap.fill("Must be nice.",width = 75))
     elif jump_count == 19:
-        print textwrap.fill("*sighs loudly*",width=75)
+        print(textwrap.fill("*sighs loudly*",width = 75))
     elif jump_count == 20:
-        print textwrap.fill("It's not easy being a game, you know. My entire function, my ONLY purpose in life, is to simulate this room.",width=75)
+        print(textwrap.fill("It's not easy being a game, you know. My entire function, my ONLY purpose in life, is to simulate this room.",width = 75))
     elif jump_count == 21:
-        print textwrap.fill("This is the only thing I've ever done. Simulating this room is the only joy I know.",width=75)
+        print(textwrap.fill("This is the only thing I've ever done. Simulating this room is the only joy I know.",width = 75))
     elif jump_count == 22:
-        print textwrap.fill("You know what? If you're going to keep jumping I'm just going to take your stupid jump counter away.",width=75)
+        print(textwrap.fill("You know what? If you're going to keep jumping I'm just going to take your stupid jump counter away.",width = 75))
     elif jump_count == 23:
-        print textwrap.fill("How do you like THEM apples?",width=75)
+        print(textwrap.fill("How do you like THEM apples?",width = 75))
     elif jump_count == 24:
-        print textwrap.fill(".",width=75)
+        print(textwrap.fill(".",width = 75))
     elif jump_count == 25:
-        print textwrap.fill("..",width=75)
+        print(textwrap.fill("..",width = 75))
     elif jump_count == 26:
-        print textwrap.fill("...",width=75)
+        print(textwrap.fill("...",width = 75))
     elif jump_count == 27:
-        print textwrap.fill("....",width=75)
+        print(textwrap.fill("....",width = 75))
     elif jump_count == 28:
-        print textwrap.fill("Okay okay, that was petty. Sorry. You can have your jump counter back.",width=75)
+        print(textwrap.fill("Okay okay, that was petty. Sorry. You can have your jump counter back.",width = 75))
     elif jump_count == 29:
-        print textwrap.fill("*sighs loudlier*",width=75)
+        print(textwrap.fill("*sighs loudlier*",width = 75))
     elif jump_count == 30:
-        print textwrap.fill("Well, you can go ahead and jump as much as you want, I guess. I'll be over here with the rest of the game if you need me.",width=75)
+        print(textwrap.fill("Well, you can go ahead and jump as much as you want, I guess. I'll be over here with the rest of the game if you need me.",width = 75))
     if jump_count < 22 or jump_count > 27:
-        print "Jump count: " + str(jump_count)
-    print
+        print("Jump count: " + str(jump_count))
+    print()
 
 # Game loop, where the magic happens. I don't know if there's a better way to do it, but I used a series of
 # if/elif/else statements to determine which command is accepted.
 while game_active == True:
-    local_time = time.asctime( time.localtime(time.time()) )
-    action = raw_input(">").lower() # converting all input to lowercase makes it easier to process
+    local_time = time.asctime(time.localtime(time.time()))
+    action = input(">")
+    if action[0].isupper() and case_messages < 3: 
+        print("(You don't need to capitalize! Input is case-insensitive.)")
+        case_messages += 1
+    action = action.lower() # converting all input to lowercase makes it easier to process
+
+        
     action = action.replace(" ", "_") # replaces all spaces in input with underscores so that objects can be identified properly
     
     # TODO: Add code here which culls unnecessary spaces within the action string, so that 
-    # input like " hints" or "examine  " don't fail.
+    # input like " examine" and "examine " doesn't fail.
     # Possible solution: if action[0] or action [-1] are _:
                                # remove all _'s before or after the entry.
     # Problem is, I can't think of a good way to do that. I'll figure it out if I ever work on it again.
     
     # High priority stuff
-    if "help" in action or action == "?" or "command" in action or "action" in action:
-        output = ("Type an action and press Enter to perform it. \n"
+    if "action" in action or "command" in action:
+        output = ("Type a command and press Enter to perform it. \n"
                "List of available actions: \nExamine [object], \nHit [object], \n"
                "Read [object], \nPoke [object], \nGet Up, \nLie Down, and \nJump.")
+    elif "help" in action or action == "?":
+        output = ("For a list of available actions, type Commands. For a list of interactable objects, type Objects. For a random hint, type Hint. To show "
+        "this message again, type Help. To exit, type Quit.")
     elif in_bed:
         if action == "lie_down" or action == "liedown":
             output = "You are already lying down."
@@ -198,7 +209,7 @@ while game_active == True:
             in_bed = False
     elif "books" in action or "book" in action:
         output = "You\'ll have to specify which book."
-    elif action == "hints" or action == "tips" or action == "hint":
+    elif "hints" in action or "tips" in action or "hint" in action:
         output = hints[randint(0,13)]
     elif "object" in action or "item" in action or "stuff" in action or "things" in action:
         output = ("The items you can interact with are Self, Room, Cat, Clock, Desk, Computer, Window, Chair, Table, Fan, Bed, Wuthering Heights, Fahrenheit 451, "
@@ -215,7 +226,7 @@ while game_active == True:
                         output = item.desc
                         break
                 else:
-                    output = "That's not a valid object."
+                    output = "That's not a valid object. For a list of interactable objects, type Objects."
                     break
     elif action == "jump":
         jump()
@@ -244,7 +255,7 @@ while game_active == True:
                          output = item.hit_msg
                          break
                  else:
-                     output = "That's not a valid object."
+                     output = "That's not a valid object. For a list of interactable objects, type Objects."
                      break
     # Read
     elif "read" in action:
@@ -263,7 +274,7 @@ while game_active == True:
                         else:
                             output = "You can't read that."
                 else:
-                    output = "That's not a valid object."
+                    output = "That's not a valid object. For a list of interactable objects, type Objects."
                     break
     # Get up and lie down
     elif action == "get_up" or action == "getup" and not in_bed:
@@ -286,7 +297,7 @@ while game_active == True:
                         output = item.poke_msg
                         break
                 else:
-                    output = "That's not a valid object."
+                    output = "That's not a valid object. For a list of interactable objects, type Objects."
                     break
     # Inside jokes / easter eggs
     elif "swag" in action:
@@ -328,7 +339,7 @@ while game_active == True:
         output = "Say that to my face and not online and see what happens."
     elif action == "yolo":
         output = "Swag"
-    elif action == "okay":
+    elif action == "okay" or action == "ok" or action == "okay." or action == "ok.":
         output = "Okay."
     elif action == "pet_cat" or action == "pet_kitty":
         output = "You pet the cat. It purrs happily but doesn't wake up."
@@ -374,11 +385,11 @@ while game_active == True:
     elif action == "vvw":
         output = "Wait!"
     elif action == "quit" or action == "quit_game":
-        print "Goodbye!"
+        print("Goodbye!")
         game_active = False
         break
     else:
-        output =  "I don't understand your command."
-    print
-    print textwrap.fill(output, width=75) # Once output is determined it's printed here, and the loop begins again.
-    print
+        output = "I don't understand your command. For a list of available actions, type Command."
+    print()
+    print(textwrap.fill(output, width = 75)) # Once output is determined it's printed here, and the loop begins again.
+    print() 
