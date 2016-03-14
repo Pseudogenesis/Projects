@@ -46,7 +46,7 @@ print()
 print(textwrap.fill("You awaken from sleep. Light is shining into your Room through the Window. Your head hurts. An Alarm is going off, and you really "
 	"want to smash it. Looks like it's time to Get Up.",width = 75))
 print()
-# items shit
+# items stuff
 class Item(object):
     def __init__(self, name, altname, desc, hit_msg, poke_msg, can_read, read_msg):
         self.name = name
@@ -65,7 +65,7 @@ self = Item("self", "me","You're wearing wrinkled clothes and could probably use
             "and you immediately regret it.", "You poke your head. Yep, still hurts.", False, None)
 cat = Item("cat", "kitty", "A black-and-brown Cat sleeping happily. It even slept through the alarm.", "Why would you hit a Cat? Look at it. It's just napping there. "
            "Come on, man.",
-           "You poke the Cat. It doesn't +seem to mind, or even notice.", False, None)
+           "You poke the Cat. It doesn't +seem to mind, or even notice.", True, "You can't read a cat. However, if you could, the time would be %s", % % local_time)
 clock = Item("clock", "alarm", "An alarm Clock. Still blaring obnoxiously.", "The Clock makes a slight crunching noise and goes silent. That felt good.", "You poke the "
              "Clock. The current time is %s." % local_time, True, "The current time is %s." % local_time) 
 desk = Item("desk", "desk", "A simple wooden Desk. Holds four books: Wuthering Heights, Fight Club, Alice In Wonderland, and Fahrenheit 451.", "You hit the Desk."
@@ -107,7 +107,7 @@ hints = ["Try using actions on Self.", "You can only interact with objects that 
         "the actions on all the objects.", "Examine the Desk to find out what the books are called.", "The only commands that work are "
          "[action] and [action object].", "If you want, you can abbreviate the names of the books as the first letter of every word. For example, "
          "\"Alice In Wonderland\" would be \"AIW\", and \"Fahrenheit 451\" would be \"F451\".", "Tomface master race.", "You can't leave the room. "
-         "Yes, you're trapped here FOREVER. Until you type Quit, that is.", "Your favorite anime is shit.", "You can only interact with other objects once "
+         "Yes, you're trapped here FOREVER. Until you type Quit, that is.", "Your favorite anime is garbage.", "You can only interact with other objects once "
          "you Get Up.", "You can only read books.", "There are numerous easter eggs in this program, but some of them are harder to find than others.",
          "Jumping is super annoying."]
 
@@ -231,13 +231,6 @@ while game_active == True:
     elif action == "jump":
         jump()
         continue
-    # Profanity net. I had to place this here or otherwise saying "Shit" would trip the "Hit" condition and lead to confusion.
-    elif "fuck" in action or "bitch" in action or "dick" in action or "piss" in action or "damn" in action or "shit" in action:
-        # Had to place this here or "u fuckin know it" would trip the profanity net.
-        if action == "u_fuckin_know_it" or action == "u_fuckin'_know_it" or action == "u_fucking_know_it" or action == "you_fuckin_know_it":
-            output = "ayy"
-        else:
-            output = "I don't appreciate the vulgarities."
     # Hit
     elif "hit" in action or "smash" in action:
         if action == "hit":
@@ -304,25 +297,15 @@ while game_active == True:
         output = "SWAG SWAG SWAG"
     elif (action == "but_i_love_my_favorite_anime" or action == "but_i_love_my_favorite_anime!" or action == "but_i_love_my_favourite_anime" or
     action == "but_i_love_my_favourite_anime!"):
-        output =  "IT'S SHIIIIIIIT."
-    elif action == "420":
-        output =  "Too high"
+        output =  "IT'S GARBAAAAGE."
     elif "open" in action and "door" in action:
         output =  "I can't let you do that, Dave."
     elif "kill" in action:
         output =  "Well that's not very nice."
     elif "cry" in action:
         output = "Suck it up, buttercup."
-    elif action == "smoke":
-        output =  "Weed everyday"
-    elif action == "smoke_weed":
-        output =  "Everyday"
-    elif action == "smoke_weed_everyday":
-        output =  "Blaze it"
     elif "yell" in action or "scream" in action:
         output = "RRRRRRREEEEEEEEEEEEEEE"
-    elif action == "weed":
-        output =  "Everyday"
     elif "meme" in action:
         output =  "Too dank"
     elif action == "dance":
