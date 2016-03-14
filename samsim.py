@@ -65,7 +65,7 @@ self = Item("self", "me","You're wearing wrinkled clothes and could probably use
             "and you immediately regret it.", "You poke your head. Yep, still hurts.", False, None)
 cat = Item("cat", "kitty", "A black-and-brown Cat sleeping happily. It even slept through the alarm.", "Why would you hit a Cat? Look at it. It's just napping there. "
            "Come on, man.",
-           "You poke the Cat. It doesn't +seem to mind, or even notice.", True, "You can't read a cat. However, if you could, the time would be %s", % % local_time)
+           "You poke the Cat. It doesn't +seem to mind, or even notice.", True, "You can't read a cat. However, if you could, the time would be %s", % local_time)
 clock = Item("clock", "alarm", "An alarm Clock. Still blaring obnoxiously.", "The Clock makes a slight crunching noise and goes silent. That felt good.", "You poke the "
              "Clock. The current time is %s." % local_time, True, "The current time is %s." % local_time) 
 desk = Item("desk", "desk", "A simple wooden Desk. Holds four books: Wuthering Heights, Fight Club, Alice In Wonderland, and Fahrenheit 451.", "You hit the Desk."
