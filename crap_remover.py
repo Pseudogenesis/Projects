@@ -1,4 +1,4 @@
-""" A simple script to remove all non-alphanumeric characters in text files with some readable text 
+""" A simple script to remove all non-alphanumeric characters in text files with some readable text  
 and LOTS of random characters. Works decently but doesn't catch everything. 
 Encoding is set to latin-1 because otherwise it throws a "UnicodeDecodeError". """
 
