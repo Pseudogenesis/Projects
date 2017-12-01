@@ -1,11 +1,12 @@
-# Credit: https://github.com/andrensegura for finding pynput package and implementing it
+# Credit: My friend https://github.com/andrensegura for finding pynput package and implementing most of it
 # http://www.techbeamers.com/python-time-functions-usage-examples/ for Time implementation
 # https://stackoverflow.com/questions/45973453/using-mouse-and-keyboard-listeners-together-in-python/ for specific mouse.Button parameters
-# This program was originally written to help diagnose a bug in Nuclear Throne,
-# but can easily be modified for other purposes.
+# This program was originally written to help diagnose a bug in Nuclear Throne, but can easily be modified for other purposes.
 
 from pynput import mouse
 import time
+
+print("------------------------------------")
 
 def on_click(x, y, button, pressed):
     if button == mouse.Button.right:
