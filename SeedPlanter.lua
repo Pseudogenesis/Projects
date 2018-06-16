@@ -3,8 +3,9 @@
 -- Feel free to message my reddit account /u/Pseudogenesis at any time, or to submit an issue or pull request to Github: https://github.com/Pseudogenesis
 -- I'm honestly not super motivated to return to this project, but if you have a major bug to report or a relatively simple feature to request, I might give it a shot. 
 -- I'd still like constructive criticism though, even if I might not carry it out. 
+-- Special thanks to Taiga, budj and Andre Segura for their indispensible help in figuring out how to put this monstrosity together.
 
--- Biggest current known issue: As it stands, this doesn't support record items that have been rerolled or actives that have been replaced. Each item list is created anew whenever a boss is killed. 
+-- As it stands, this doesn't support record items that have been rerolled or actives that have been replaced. Each item list is created anew whenever a boss is killed. 
 -- I spent half a day trying to fix it, but due to the way the program is structured it was much more difficult for me than I thought. I might fix it eventually but it'd likely require a major refactoring that I'm not motivated to work on
 
 -- STATIC VARIABLES
@@ -20,7 +21,7 @@ local NotableItemsDict = {[12] = "Magic Mushroom", [245] = "20/20",[182] = "Sacr
 				[51] = "Pentagram",[189] = "SMB Super Fan",[216] = "Ceremonial Robes",[7] = "Blood of the Martyr",[330] = "Soy Milk",[5] = "My Reflection",[223] = "Tiny Planet",[529] = "Pop!",[152] = "Tech 2",
 				[6] = "Number One",[524] = "Tech Zero",[69] = "Chocolate Milk",[402] = "Chaos",[2] = "The Inner Eye",[149] = "Ipecac",[414] = "More Options",[215] = "Goat Head",[424] = "Sack Head", [499] = "Eucharist", 
 				[229] = "Monstro's Lung",[52] = "Dr. Fetus",[268] = "Dark Bum",[3] = "Spoon Bender",[104] = "The Parasite",[329] = "Ludovico Technique",[335] = "The Soul", [284] = "D4", [225] = "Gimpy", 
-				[81] = "Dead Cat", [98] = "The Relic", [83] = "The Nail", [121] = "Odd Mushroom (Thick)", [120] = "Odd Mushroom (Thin)", [132] = "Lump of Coal", [68] = "Technology", [224] = "Tech.5",
+				[81] = "Dead Cat", [98] = "The Relic", [83] = "The Nail", [121] = "Odd Mushroom (Thick)", [120] = "Odd Mushroom (Thin)", [132] = "Lump of Coal", [68] = "Technology", [224] = "Tech.5", [407] = "Purity",
 				[64] = "Steam Sale", [134] = "Guppy's Tail", [145] = "Guppy's Head", [212] = "Guppy's Collar", [187] = "Guppy's Hairball", [133] = "Guppy's Paw", [144] = "Bum Friend", [385] = "Bumbo", 
 				[109] = "Money = Power", [78] = "Book of Revelations", [292] = "Satanic Bible", [173] = "Mitre", [151] = "The Mulligan", [179] = "Fate", [184] = "Holy Grail", [20] = "Transcendence", [477] = "Void", 
 				[82] = "Lord of the Pit", [159] = "Spirit of the Night", [185] = "Dead Dove", [248] = "Hive Mind", [314] = "Thunder Thighs", [417] = "Succubus", [528] = "Angelic Prism", [534] = "Schoolbag", 
