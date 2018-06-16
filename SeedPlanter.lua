@@ -3,7 +3,7 @@
 -- Feel free to message my reddit account /u/Pseudogenesis at any time, or to submit an issue or pull request to Github: https://github.com/Pseudogenesis
 -- I'm honestly not super motivated to return to this project, but if you have a major bug to report or a relatively simple feature to request, I might give it a shot. 
 -- I'd still like constructive criticism though, even if I might not carry it out. 
--- Special thanks to Taiga, budj and Andre Segura for their indispensible help in figuring out how to put this monstrosity together.
+-- Special thanks to Taiga, budj and bibbleskit for their indispensible help in figuring out how to put this monstrosity together.
 
 -- As it stands, this doesn't support record items that have been rerolled or actives that have been replaced. Each item list is created anew whenever a boss is killed. 
 -- I spent half a day trying to fix it, but due to the way the program is structured it was much more difficult for me than I thought. I might fix it eventually but it'd likely require a major refactoring that I'm not motivated to work on
@@ -189,7 +189,7 @@ function seedMod:CheckDeadNPC(DeadNPC) -- We're only really updating when a boss
 end
 
 
-function seedMod:make_pretty(uglystr) -- Pretty printer written by the legendary Andre Segura - https://github.com/andrensegura/ . I have no clue how this voodoo magic works, so comments will be limited to the things I changed. 
+function seedMod:make_pretty(uglystr) -- Pretty printer written by the legendary bibbleskit - https://github.com/andrensegura/ . I have no clue how this voodoo magic works, so comments will be limited to the things I changed. 
     -- Takes an ugly string, returns a prettier one.
     -- Change spaces to your desired indentation width.
 	local tableBuffer = {}
