@@ -10,6 +10,7 @@
 
 -- STATIC VARIABLES
 local seedMod = RegisterMod("Seed Planter 1.5", 1)
+local possibleTransformations = {[0] = "Guppy", [1] = "Lord of the Flies", [2] = "Fun Guy", [3] = "Seraphim", [4] = "Bob", [5] = "Spun", [6] = "Yes Mother", [7] = "Conjoined", [8] = "Leviathan", [9] = "Oh Crap", [10] = "Bookworm", [11] = "Adult", [12] = "Spider Baby"}
 
 --[[ Notable items the run might've had. Based on the top 30 items on IsaacRanks.com (as of 5/27/18), game-designated special items, and any other items I thought were run-defining, powerful, notable or memorable
 	 Some items, like Guppy's Collar, Rotten Baby and Gnawed Leaf, don't necessarily fit these criteria but are included for the sake of identifying possible transformations or interesting synergies (Guppy, fly synergy, etc) 
@@ -40,6 +41,7 @@ local json = require("json") --[[AB+ includes JSON4Lua, a JSON encoding utility.
 local difficultyTable = {[0] = "Normal", [1] = "Hard", [2] = "Greed", [3] = "Greedier"}
 
 
+
 -- DYNAMIC VARIABLES
 
 local trackingItems = 1 -- Sort of a legacy variable, probably dumb but I'm keeping it in to prevent loops from screwing things up in some unforeseen way
@@ -48,6 +50,7 @@ local currentRunDataExists = false
 local firstTimeUser
 local gameStartCheckDone = false
 local currentItems = ""
+
 
 
 -- FUNCTIONS
@@ -82,69 +85,74 @@ end
 
 
 
-function seedMod:IsolateSeeds(data) -- Takes the log data, extracts the most recent seed info, and separates it all into distinct parts. masterTable contains everything, lastSeedTable is just lastSeed after JSON4Lua is through with it. 
-	local masterTable = {}
-	local lastSeedTable = {}
+function seedMod:IsolateSeeds(data) -- Takes the log data, extracts the most recent seed info, and separates it into two parts: The last seed data, and the rest of the file.  
+	local master = {}			-- This is to make it easier for us to 
 	local lastSeed = ""
-	table.insert(lastSeedTable, string.match(data, "{.*}"))
-	lastSeed = table.concat(lastSeedTable)
-	Isaac.ConsoleOutput(lastSeed)
-	lastSeedTable = seedMod:CustomDecode(lastSeed)
-	table.insert(masterTable, lastSeed)
-	table.insert(masterTable, string.match(data, "}(.*)"))
-	return lastSeed, lastSeedTable, masterTable
+	lastSeed = string.match(data, "{.-}")
+	lastTable = seedMod:CustomDecode(lastSeed)
+	table.insert(master, lastSeed)
+	table.insert(master, string.match(data, "}(.*)"))
+	return master, lastTable
 end
 
+function seedMod:GetRunData() -- returns a table containing the current run data: Seed, character, items, mode/difficulty, and transformations
+
+	local playerOne = Isaac.GetPlayer(0)
+	-- local datetime = os.date("%x %X") -- Disabled due to the os library being inaccessible through the API under normal circumstances. No way around this, unfortunately. I plan to replace Date with a measure of run length. 
+	local dataTable = {
+		Seed = Game():GetSeeds():GetStartSeedString(),
+		Name = playerOne:GetName(),
+		Date = "Disabled - impossible to access with API",
+		Transformations = seedMod:RecordTransformations(),
+		Items = currentItems,
+		Mode = difficultyTable[Game().Difficulty]
+	}
+	
+	-- dataTable[Seed] = Game():GetSeeds():GetStartSeedString() 
+	-- dataTable[Name] = playerOne:GetName()
+	-- dataTable[Date] = "Disabled - impossible to access with API"
+	-- dataTable[Transformations] = seedMod:RecordTransformations()
+	-- dataTable[Items] = currentItems
+	-- dataTable[Mode] = difficultyTable[Game().Difficulty]
+	-- Isaac.ConsoleOutput(runData[1])
+	if Game().Challenge > 0 then
+		dataTable[Mode] = "Challenge (Normal)" -- All challenges are Normal difficulty but do not support starting from seed. I'm supporting challenges anyway, just in case somebody really likes the run the seed generated. 
+	end
+	return dataTable
+end
+	
+	
 function seedMod:SaveInfo() -- The main logical structure of the program. If there was ever something I was going to refactor, it'd be this. Although it's *much* cleaner now that I moved several major code blocks into their own functions. 
 	if Game():GetVictoryLap() == 0 then
-		local lastSeed = ""
-		local lastSeedTable, masterTable = {}
-		
-		trackingItems = 1
+		local masterTable = {}
+		local lastSeedTable = {}
+		local runData = seedMod:GetRunData()
 		seedData = ""
-		local seedDataTableBuffer = {}
-		
-		local player = Isaac.GetPlayer(0)
-		local seed = Game():GetSeeds():GetStartSeedString() 
-		local name = player:GetName()
-		local mode = difficultyTable[Game().Difficulty]
-		-- local datetime = os.date("%x %X") -- Disabled due to the os library being inaccessible through the API under normal circumstances. No way around this, unfortunately. I plan to replace Date with a measure of run length. 
-		local datetime = "Disabled - impossible to access with API"
-		local transforms = seedMod:RecordTransformations()
-		local isChallenge = Game().Challenge -- All challenges are Normal difficulty but do not support starting from seed. I'm supporting challenges anyway, just in case somebody really likes the run the seed generated. 
-		if isChallenge > 0 then
-			mode = "Challenge (Normal)"
-		end
-		
-		if currentItems == "" then
-			currentItems = "No notable items"
-		end
-		
-		local currentSeedInfo = {Date = datetime, Items = currentItems, Seed = seed, Name = name, Mode = mode, Transformations = transforms}
+		trackingItems = 1
 		-- datetime = string.gsub(datetime, "/", "-") -- "/"s gets turned into "\/" after being parsed by JSON4Lua, which looks really weird. "-"s circumvent this
 		seedData = Isaac.LoadModData(seedMod)
 		
 		if string.len(seedData) == 0 then -- If the save file is completely empty, i.e. somebody just installed the mod
 			firstTimeUser = true
-			currentSeedInfo = seedMod:CustomEncode(currentSeedInfo)
-			seedData = currentSeedInfo
+			runData = seedMod:CustomEncode(runData)
+			seedData = runData
 			Isaac.SaveModData(seedMod, seedData)
 			currentRunDataExists = true
 		else
-			lastSeed, lastSeedTable, masterTable = seedMod:IsolateSeeds(seedData)
+			masterTable, lastSeedTable = seedMod:IsolateSeeds(seedData)
 		end
 		if (not currentRunDataExists) and (not firstTimeUser) then -- If it's a new run, append a new table with the current run's data to the master table
-			table.insert(masterTable, 1, currentSeedInfo)
+			table.insert(masterTable, 1, runData)
 			masterTable[1] = seedMod:CustomEncode(masterTable[1])
 			currentRunDataExists = true
 		elseif currentRunDataExists and (not firstTimeUser) then -- If it's a continued run, then just edit the existing items list.
 			masterTable[1] = lastSeedTable
 			if string.len(masterTable[1].Items) < string.len(currentItems) then -- Comparing lengths prevents things like complete item rerolls from deleting the existing item data. Old will be overwritten if the new notable items list exceeds it in length
-				masterTable[1] = currentSeedInfo
+				masterTable[1] = runData
 			elseif masterTable[1].Items == "No notable items" and currentItems ~= "No notable items" then -- Ensures that short currentItems lists, like "20-20, Tech 2" would overwrite the "No notable items" string. 
-				masterTable[1] = currentSeedInfo
+				masterTable[1] = runData
 			else
-				masterTable[1].Transformations = transforms
+				masterTable[1].Transformations = runData.Transformations
 				-- Run length will also be set here, when I implement it
 			end
 			masterTable[1] = seedMod:CustomEncode(masterTable[1])
@@ -184,6 +192,9 @@ function seedMod:UpdateItemsList(fromBossKill) -- Cycles through our list of not
 		end
 		currentItems = table.concat(itemTableBuffer)
 		currentItems = string.gsub(currentItems, "/", "-") -- Same deal as with date, the item "20/20" is renamed to "20-20" for formatting reasons
+		if currentItems == "" then
+			currentItems = "No notable items"
+		end
 		if not fromBossKill then
 			seedMod:SaveInfo(currentItems)
 		end
@@ -194,7 +205,6 @@ function seedMod:RecordTransformations() -- Checks for transformations the playe
 	local transformationCount = 0
 	local player = Isaac.GetPlayer(0)
 	local currentTransformations = {}
-	local possibleTransformations = {[0] = "Guppy", [1] = "Lord of the Flies", [2] = "Fun Guy", [3] = "Seraphim", [4] = "Bob", [5] = "Spun", [6] = "Yes Mother", [7] = "Conjoined", [8] = "Leviathan", [9] = "Oh Crap", [10] = "Bookworm", [11] = "Adult", [12] = "Spider Baby"}
 	for transformationID, transformationName in pairs(possibleTransformations) do 
 		if player:HasPlayerForm(transformationID) then
 			transformationCount = transformationCount + 1
@@ -313,25 +323,29 @@ seedMod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, seedMod.OnMenuExit) -- Trigge
 
 -- DEBUG STUFF
 
--- function seedMod:TestTable(location)  -- Deprecated for now
-	-- Isaac.ConsoleOutput(location .. ": ")
-	-- for k,v in ipairs(masterTable) do
-	-- Isaac.ConsoleOutput(count)
-	-- count = count + 1
-	-- Isaac.ConsoleOutput(tostring(v))
-	-- Isaac.ConsoleOutput("\n")
-	-- end
--- end
+--[[ function seedMod:TestTable(location)  -- Deprecated for now
+	Isaac.ConsoleOutput(location .. ": ")
+	for k,v in ipairs(masterTable) do
+	Isaac.ConsoleOutput(count)
+	count = count + 1
+	Isaac.ConsoleOutput(tostring(v))
+	Isaac.ConsoleOutput("\n")
+	end
+end
 
--- Isaac.ConsoleOutput("After master table made: ") - Block for testing contents of the masterTable. 
--- local count = 1
--- for k,v in ipairs(masterTable) do
-	-- Isaac.ConsoleOutput(count)
-	-- count = count + 1
-	-- Isaac.ConsoleOutput(tostring(v))
-	-- Isaac.ConsoleOutput("\n")
--- end
+Isaac.ConsoleOutput("After master table made: ") - Block for testing contents of the masterTable. 
+local count = 1
+for k,v in ipairs(masterTable) do
+	Isaac.ConsoleOutput(count)
+	count = count + 1
+	Isaac.ConsoleOutput(tostring(v))
+	Isaac.ConsoleOutput("\n")
+end
 
--- function seedMod:Trim(str) -- Removes whitespace. Debug, deprecated for now
-  -- return (str:gsub("^%s*(.-)%s*$", "%1"))
--- end
+function seedMod:Trim(str) -- Removes whitespace. Debug, deprecated for now
+  return (str:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+Bug solutions:
+
+"Transformations" disappearing from old seed data. You're accidentally setting Transformations to a nil value somehow. Maybe you're trying to access a property that doesn't actually exist
