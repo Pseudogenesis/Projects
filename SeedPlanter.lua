@@ -732,8 +732,8 @@ function seedMod:RenderUI()
 	-- Proportional scaling for consistent look across all screen sizes
 	local leftMargin = math.floor(screenWidth * 0.03)  -- 3% of screen width
 	local topMargin = math.floor(screenHeight * 0.05)  -- 5% of screen height
-	local footerHeight = math.floor(screenHeight * 0.08)  -- 8% for footer area (increased)
-	local minSeedHeight = math.floor(screenHeight * 0.10)  -- 10% minimum per seed (more conservative)
+	local footerReserve = math.floor(screenHeight * 0.12)  -- 12% reserved for footer
+	local minSeedHeight = math.floor(screenHeight * 0.13)  -- 13% minimum per seed (very conservative)
 
 	local maxWidth = screenWidth - (leftMargin * 2) -- Leave margins on both sides
 	local yPos = topMargin
@@ -744,9 +744,9 @@ function seedMod:RenderUI()
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
 	yPos = yPos + 20
 
-	-- Calculate available vertical space (82% of screen, rest for title/footer)
-	-- More conservative to prevent overflow into footer area
-	local maxY = math.floor(screenHeight * 0.82)
+	-- Calculate available vertical space (78% of screen max, rest for title/footer)
+	-- Very conservative to prevent any overflow into footer area
+	local maxY = math.floor(screenHeight * 0.78)
 	local visibleCount = 0
 	local startIdx = uiScrollOffset + 1
 	local endIdx = startIdx
@@ -924,9 +924,9 @@ function seedMod:RenderUI()
 	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
 	footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
-	-- Footer positioned proportionally from bottom (8% of screen height)
+	-- Footer positioned in reserved space at bottom (12% reserved, positioned at 90%)
 	local footerWidth = font:GetStringWidth(footer)
-	local footerY = screenHeight - footerHeight
+	local footerY = math.floor(screenHeight * 0.90)  -- Position at 90% to stay on screen
 
 	-- Check if footer text fits on screen, abbreviate if necessary
 	if footerWidth > maxWidth then
