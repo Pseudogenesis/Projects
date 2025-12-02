@@ -77,6 +77,65 @@ local NotableItemsDict = {
 	[636] = "R Key", [642] = "Magic Skin", [643] = "Revelation", [656] = "Damocles",
 	[678] = "C Section", [689] = "Glitched Crown", [714] = "Spindown Dice"
 }
+
+-- Item priority rankings (1-5, where 5 = most important)
+-- This ensures the best items appear first in the list
+local ItemPriority = {
+	-- Tier 5: Game-breaking, run-winning items
+	[182] = 5, -- Sacred Heart
+	[331] = 5, -- Godhead
+	[628] = 5, -- Death Certificate
+	[636] = 5, -- R Key
+	[562] = 5, -- Rock Bottom
+	[689] = 5, -- Glitched Crown
+
+	-- Tier 4: Extremely powerful items
+	[118] = 4, -- Brimstone
+	[114] = 4, -- Mom's Knife
+	[169] = 4, -- Polyphemus
+	[168] = 4, -- Epic Fetus
+	[395] = 4, -- Tech X
+	[313] = 4, -- Holy Mantle
+	[399] = 4, -- Maw of the Void
+	[12] = 4,  -- Magic Mushroom
+	[678] = 4, -- C Section
+	[625] = 4, -- Mega Mush
+	[656] = 4, -- Damocles
+
+	-- Tier 3: Very strong items
+	[4] = 3,   -- Cricket's Head
+	[237] = 3, -- Death's Touch
+	[261] = 3, -- Proptosis
+	[245] = 3, -- 20/20
+	[153] = 3, -- Mutant Spider
+	[360] = 3, -- Incubus
+	[230] = 3, -- Abaddon
+	[105] = 3, -- D6
+	[52] = 3,  -- Dr. Fetus
+	[229] = 3, -- Monstro's Lung
+	[643] = 3, -- Revelation
+	[579] = 3, -- Spirit Sword
+	[714] = 3, -- Spindown Dice
+
+	-- Tier 2: Strong items
+	[415] = 2, -- Crown of Light
+	[223] = 2, -- Pyromaniac
+	[215] = 2, -- Goat Head
+	[477] = 2, -- Void
+	[407] = 2, -- Purity
+	[149] = 2, -- Ipecac
+	[329] = 2, -- Ludovico Technique
+	[69] = 2,  -- Chocolate Milk
+	[494] = 2, -- Jacob's Ladder
+	[642] = 2, -- Magic Skin
+
+	-- Everything else defaults to Tier 1 (still notable, but less critical)
+}
+
+-- Get priority for an item (default to 1 if not specified)
+local function GetItemPriority(itemID)
+	return ItemPriority[itemID] or 1
+end
 				
 
 local json = require("json") --[[AB+ includes JSON4Lua, a JSON encoding utility. This mod uses it to store and retrieve info from the save file as tables. 
@@ -365,16 +424,33 @@ function seedMod:UpdateItemsList(fromBossKill)
 		currentQualityItems = ""
 
 		-- First, build the notable items list (manual curated list)
+		-- Collect items with their priorities for sorting
+		local itemsWithPriority = {}
 		for ItemID, ItemName in pairs(NotableItemsDict) do
 			if player:HasCollectible(ItemID) then
-				numberOfItems = numberOfItems + 1
-				if numberOfItems > 1 then
-					table.insert(itemTableBuffer, ", ")
-					table.insert(itemTableBuffer, ItemName)
-				else
-					table.insert(itemTableBuffer, ItemName)
-				end
+				table.insert(itemsWithPriority, {
+					id = ItemID,
+					name = ItemName,
+					priority = GetItemPriority(ItemID)
+				})
 			end
+		end
+
+		-- Sort by priority (highest first), then alphabetically by name
+		table.sort(itemsWithPriority, function(a, b)
+			if a.priority == b.priority then
+				return a.name < b.name  -- Alphabetical if same priority
+			end
+			return a.priority > b.priority  -- Higher priority first
+		end)
+
+		-- Build the comma-separated string from sorted items
+		for i, item in ipairs(itemsWithPriority) do
+			numberOfItems = numberOfItems + 1
+			if i > 1 then
+				table.insert(itemTableBuffer, ", ")
+			end
+			table.insert(itemTableBuffer, item.name)
 		end
 
 		-- Second, build quality-based items list (all items meeting quality threshold)
