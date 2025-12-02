@@ -197,8 +197,20 @@ function seedMod:CustomEncode(tbl) -- Bundles json.encode() with our own pretty 
 	return encodedSeed
 end
 
-function seedMod:CustomDecode(str) -- Same as above but for decoding
+function seedMod:CustomDecode(str) -- Decodes pretty-printed JSON back to table
 	local decodedSeed = seedMod:ReverseExtraPretty(str)
+	-- Remove all whitespace formatting (newlines, carriage returns, extra spaces)
+	decodedSeed = string.gsub(decodedSeed, "\r\n", "")
+	decodedSeed = string.gsub(decodedSeed, "\n", "")
+	decodedSeed = string.gsub(decodedSeed, "\r", "")
+	-- Remove indentation spaces (but keep spaces within quoted strings)
+	decodedSeed = string.gsub(decodedSeed, "%s+", " ")
+	decodedSeed = string.gsub(decodedSeed, " :", ":")
+	decodedSeed = string.gsub(decodedSeed, ": ", ":")
+	decodedSeed = string.gsub(decodedSeed, " ,", ",")
+	decodedSeed = string.gsub(decodedSeed, ", ", ",")
+	decodedSeed = string.gsub(decodedSeed, "{ ", "{")
+	decodedSeed = string.gsub(decodedSeed, " }", "}")
 	decodedSeed = json.decode(decodedSeed)
 	return decodedSeed
 end
@@ -451,12 +463,14 @@ end
 
 function seedMod:ReverseExtraPretty(inboundSaveData)
 	-- Reverses ExtraPretty() formatting so JSON can be parsed again
+	-- Handle both new and old format (old format had "Date" instead of "Floor")
 	inboundSaveData = string.gsub(inboundSaveData, 'Mode: ', '"Mode":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Name: ', '"Name":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Items: ', '"Items":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items: ', '"QualityItems":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Seed: ', '"Seed":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Floor: ', '"Floor":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Date: ', '"Date":') -- Old format compatibility
 	inboundSaveData = string.gsub(inboundSaveData, 'Transformations: ', '"Transformations":')
 	return inboundSaveData
 end
