@@ -634,7 +634,7 @@ end
 -- IN-GAME UI FUNCTIONS
 
 local uiScrollOffset = 0
-local MAX_VISIBLE_SEEDS = 8
+local MAX_VISIBLE_SEEDS = 4  -- Reduced to fit on screen with detailed info
 
 function seedMod:ToggleUI()
 	-- Toggle the seed history UI on/off
