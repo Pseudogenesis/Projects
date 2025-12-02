@@ -346,6 +346,9 @@ function seedMod:SaveInfo()
 			seedData = runData
 			Isaac.SaveModData(seedMod, seedData)
 			currentRunDataExists = true
+
+			-- Mark cache as needing refresh since we just saved new data
+			cacheNeedsRefresh = true
 		else
 			-- Try to parse existing save data
 			masterTable, lastSeedTable = seedMod:IsolateSeeds(seedData)
@@ -365,6 +368,10 @@ function seedMod:SaveInfo()
 				seedData = seedData .. "\n" .. encodedNewRun
 				Isaac.SaveModData(seedMod, seedData)
 				currentRunDataExists = true
+
+				-- Mark cache as needing refresh since we just saved new data
+				cacheNeedsRefresh = true
+
 				return -- Exit early to prevent further processing
 			end
 		end
@@ -405,6 +412,9 @@ function seedMod:SaveInfo()
 		else
 			firstTimeUser = false
 		end
+
+		-- Mark cache as needing refresh since we just saved new data
+		cacheNeedsRefresh = true
 
 	else
 		trackingItems = 0 -- Victory laps not tracked
@@ -636,18 +646,33 @@ end
 local uiScrollOffset = 0
 local MAX_VISIBLE_SEEDS = 5  -- Optimized to fill screen while preventing overflow
 
+-- Performance optimization: Cache parsed seed data to avoid re-parsing every frame
+local cachedSeeds = nil
+local cacheNeedsRefresh = true
+
 function seedMod:ToggleUI()
 	-- Toggle the seed history UI on/off
 	showingUI = not showingUI
 	if showingUI then
 		uiScrollOffset = 0
+		cacheNeedsRefresh = true  -- Refresh cache when opening UI
 	end
 end
 
 function seedMod:ParseSeedHistory()
 	-- Parse saved seed data and return a table of seed entries
+	-- Uses caching to avoid expensive re-parsing every frame (critical for large log files)
+
+	-- Return cached data if available and valid
+	if cachedSeeds and not cacheNeedsRefresh then
+		return cachedSeeds
+	end
+
+	-- Need to parse/re-parse the data
 	local savedData = Isaac.LoadModData(seedMod)
 	if string.len(savedData) == 0 then
+		cachedSeeds = {}
+		cacheNeedsRefresh = false
 		return {}
 	end
 
@@ -660,6 +685,10 @@ function seedMod:ParseSeedHistory()
 			table.insert(seeds, decodedSeed)
 		end
 	end
+
+	-- Cache the results for subsequent frames
+	cachedSeeds = seeds
+	cacheNeedsRefresh = false
 
 	return seeds
 end
