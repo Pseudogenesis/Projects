@@ -665,7 +665,7 @@ function seedMod:ParseSeedHistory()
 end
 
 function seedMod:RenderUI()
-	-- Render the in-game seed history UI
+	-- Render the in-game seed history UI with proper pixel-width-based text wrapping
 	if not showingUI then
 		return
 	end
@@ -693,13 +693,15 @@ function seedMod:RenderUI()
 	font:Load("font/upheaval.fnt")
 	local screenWidth = Isaac.GetScreenWidth()
 	local screenHeight = Isaac.GetScreenHeight()
-	local yPos = 40
+	local leftMargin = 30
+	local maxWidth = screenWidth - (leftMargin * 2) -- Leave margins on both sides
+	local yPos = 30
 
 	-- Title
 	local title = "SEED PLANTER - Recent Seeds"
 	local titleWidth = font:GetStringWidth(title)
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
-	yPos = yPos + 25
+	yPos = yPos + 20
 
 	-- Draw visible seeds
 	local startIdx = uiScrollOffset + 1
@@ -709,88 +711,111 @@ function seedMod:RenderUI()
 		local seed = seeds[i]
 		local lineColor = KColor(1,1,1,1)
 
-		-- Seed info
+		-- Seed info (compact format)
 		local seedLine = string.format("%d. %s - %s (%s)", i, seed.Seed or "???", seed.Name or "Unknown", seed.Mode or "Unknown")
-		font:DrawString(seedLine, 50, yPos, lineColor, 0, true)
-		yPos = yPos + 15
+		font:DrawString(seedLine, leftMargin, yPos, lineColor, 0, true)
+		yPos = yPos + 13
 
 		-- Floor reached
 		if seed.Floor then
-			local floorLine = "   Floor: " .. seed.Floor
-			font:DrawString(floorLine, 50, yPos, KColor(0.8,0.8,1,1), 0, true)
-			yPos = yPos + 12
+			local floorLine = "Floor: " .. seed.Floor
+			font:DrawString(floorLine, leftMargin + 10, yPos, KColor(0.8,0.8,1,1), 0, true)
+			yPos = yPos + 11
 		end
 
 		-- Transformations
 		if seed.Transformations and seed.Transformations ~= "None" then
-			local transLine = "   Transformations: " .. seed.Transformations
-			font:DrawString(transLine, 50, yPos, KColor(1,0.8,1,1), 0, true)
-			yPos = yPos + 12
+			local transLine = "Trans: " .. seed.Transformations
+			font:DrawString(transLine, leftMargin + 10, yPos, KColor(1,0.8,1,1), 0, true)
+			yPos = yPos + 11
 		end
 
-		-- Items (word-wrap if too long)
+		-- Items (word-wrap using actual pixel width)
 		if seed.Items and seed.Items ~= "No notable items" then
 			local itemsText = seed.Items
-			local maxLineLength = 70 -- Characters per line
+			local prefix = "Items: "
+			local indent = "       "
+			local prefixWidth = font:GetStringWidth(prefix)
+			local indentWidth = font:GetStringWidth(indent)
 
-			-- Split into multiple lines if too long
-			if string.len(itemsText) > maxLineLength then
-				local words = {}
-				for word in string.gmatch(itemsText, "[^,]+") do
-					table.insert(words, word)
+			-- Split items by comma
+			local items = {}
+			for item in string.gmatch(itemsText, "[^,]+") do
+				table.insert(items, item)
+			end
+
+			local currentLine = prefix
+			local currentWidth = prefixWidth
+			local lineCount = 0
+			local maxLines = 2 -- Limit to 2 lines per seed
+
+			for idx, item in ipairs(items) do
+				-- Add comma if not first item
+				local itemText = item
+				if idx < #items then
+					itemText = itemText .. ","
 				end
 
-				local currentLine = "   Items: "
-				local lineCount = 0
+				local itemWidth = font:GetStringWidth(itemText)
 
-				for i, word in ipairs(words) do
-					local testLine = currentLine .. word
-					if i < #words then
-						testLine = testLine .. ","
+				-- Check if adding this item would exceed width
+				if currentWidth + itemWidth > maxWidth and currentLine ~= prefix then
+					-- Print current line and start new one
+					font:DrawString(currentLine, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
+					yPos = yPos + 11
+					lineCount = lineCount + 1
+
+					-- Check if we've hit max lines
+					if lineCount >= maxLines then
+						-- Print truncation indicator
+						local truncated = indent .. "..."
+						font:DrawString(truncated, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
+						yPos = yPos + 11
+						break
 					end
 
-					if string.len(testLine) > maxLineLength and currentLine ~= "   Items: " then
-						-- Print current line and start new one
-						font:DrawString(currentLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
-						yPos = yPos + 12
-						lineCount = lineCount + 1
-						currentLine = "          " .. word
-						if i < #words then
-							currentLine = currentLine .. ","
-						end
-
-						-- Limit to 2 lines to prevent overflow
-						if lineCount >= 2 then
-							currentLine = currentLine .. "..."
-							break
-						end
-					else
-						currentLine = testLine
-					end
+					-- Start new line with indentation
+					currentLine = indent .. itemText
+					currentWidth = indentWidth + itemWidth
+				else
+					-- Add to current line
+					currentLine = currentLine .. itemText
+					currentWidth = currentWidth + itemWidth
 				end
+			end
 
-				-- Print final line
-				font:DrawString(currentLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
-				yPos = yPos + 12
-			else
-				-- Short enough to fit on one line
-				local itemLine = "   Items: " .. itemsText
-				font:DrawString(itemLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
-				yPos = yPos + 12
+			-- Print final line if not truncated
+			if lineCount < maxLines then
+				font:DrawString(currentLine, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
+				yPos = yPos + 11
 			end
 		end
 
-		yPos = yPos + 8 -- Spacing between entries
+		yPos = yPos + 6 -- Compact spacing between entries
 	end
 
-	-- Footer with controls
-	local footer = "Press F2 to close | " .. string.format("Showing %d-%d of %d seeds", startIdx, endIdx, #seeds)
+	-- Footer with controls and scroll indicators
+	local footer = "F2: Close"
+	if #seeds > MAX_VISIBLE_SEEDS then
+		footer = footer .. " | Up/Down: Scroll"
+	end
+	footer = footer .. " | " .. string.format("Showing %d-%d of %d", startIdx, endIdx, #seeds)
+
 	local footerWidth = font:GetStringWidth(footer)
-	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 30, KColor(0.7,0.7,0.7,1), 0, true)
+	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 25, KColor(0.7,0.7,0.7,1), 0, true)
+
+	-- Scroll indicators
+	if uiScrollOffset > 0 then
+		local upArrow = "^ More above ^"
+		local upWidth = font:GetStringWidth(upArrow)
+		font:DrawString(upArrow, screenWidth/2 - upWidth/2, yPos + 5, KColor(1,1,0.5,1), 0, true)
+	end
 end
 
--- Track previous key state to prevent multiple triggers
+-- Track previous key states to prevent multiple triggers
 local lastKeyState = false
+local lastUpKeyState = false
+local lastDownKeyState = false
 
 function seedMod:OnUpdate()
 	-- Check for F2 key press to toggle UI
@@ -804,6 +829,31 @@ function seedMod:OnUpdate()
 	end
 
 	lastKeyState = keyPressed
+
+	-- Handle arrow key scrolling when UI is visible
+	if showingUI then
+		local upPressed = Input.IsButtonPressed(Keyboard.KEY_UP, 0)
+		local downPressed = Input.IsButtonPressed(Keyboard.KEY_DOWN, 0)
+
+		-- Scroll up (show earlier seeds)
+		if upPressed and not lastUpKeyState then
+			if uiScrollOffset > 0 then
+				uiScrollOffset = uiScrollOffset - 1
+			end
+		end
+
+		-- Scroll down (show later seeds)
+		if downPressed and not lastDownKeyState then
+			local seeds = seedMod:ParseSeedHistory()
+			local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
+			if uiScrollOffset < maxOffset then
+				uiScrollOffset = uiScrollOffset + 1
+			end
+		end
+
+		lastUpKeyState = upPressed
+		lastDownKeyState = downPressed
+	end
 end
 
 -- CALLBACKS
