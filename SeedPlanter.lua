@@ -931,8 +931,8 @@ function seedMod:RenderUI()
 	local footerY = math.floor(screenHeight * 0.90)  -- Position at 90% to stay on screen
 
 	-- Calculate footer X position with margins to avoid HUD overlap
-	-- Use left margin to clear trinkets/cards, ensure right side clears item names
-	local footerMargin = math.floor(screenWidth * 0.08)  -- 8% margin on each side for footer
+	-- Use larger margins to clear trinkets/cards on left and item names on right
+	local footerMargin = math.floor(screenWidth * 0.12)  -- 12% margin on each side for footer
 	local footerMaxWidth = screenWidth - (footerMargin * 2)
 
 	-- Check if footer text fits within safe area, abbreviate if necessary
