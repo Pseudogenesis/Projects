@@ -732,8 +732,8 @@ function seedMod:RenderUI()
 	-- Proportional scaling for consistent look across all screen sizes
 	local leftMargin = math.floor(screenWidth * 0.03)  -- 3% of screen width
 	local topMargin = math.floor(screenHeight * 0.05)  -- 5% of screen height
-	local footerHeight = math.floor(screenHeight * 0.05)  -- 5% for footer area
-	local minSeedHeight = math.floor(screenHeight * 0.05)  -- 5% minimum per seed
+	local footerHeight = math.floor(screenHeight * 0.08)  -- 8% for footer area (increased)
+	local minSeedHeight = math.floor(screenHeight * 0.10)  -- 10% minimum per seed (more conservative)
 
 	local maxWidth = screenWidth - (leftMargin * 2) -- Leave margins on both sides
 	local yPos = topMargin
@@ -744,8 +744,9 @@ function seedMod:RenderUI()
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
 	yPos = yPos + 20
 
-	-- Calculate available vertical space (88% of screen, rest for title/footer)
-	local maxY = math.floor(screenHeight * 0.88)
+	-- Calculate available vertical space (82% of screen, rest for title/footer)
+	-- More conservative to prevent overflow into footer area
+	local maxY = math.floor(screenHeight * 0.82)
 	local visibleCount = 0
 	local startIdx = uiScrollOffset + 1
 	local endIdx = startIdx
@@ -923,9 +924,27 @@ function seedMod:RenderUI()
 	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
 	footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
-	-- Footer positioned proportionally from bottom (5% of screen height)
+	-- Footer positioned proportionally from bottom (8% of screen height)
 	local footerWidth = font:GetStringWidth(footer)
 	local footerY = screenHeight - footerHeight
+
+	-- Check if footer text fits on screen, abbreviate if necessary
+	if footerWidth > maxWidth then
+		-- Ultra-compact format if text is too long
+		footer = "F2 | "
+		if hasMoreSeeds or canScrollUp then
+			if uiScrollOffset == 0 then
+				footer = footer .. "↓ | "
+			elseif not hasMoreSeeds then
+				footer = footer .. "↑ | "
+			else
+				footer = footer .. "↕ | "
+			end
+		end
+		footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
+		footerWidth = font:GetStringWidth(footer)
+	end
+
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, footerY, KColor(0.7,0.7,0.7,1), 0, true)
 
 	-- Store endIdx for scroll calculations
