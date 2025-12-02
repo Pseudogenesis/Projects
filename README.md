@@ -79,10 +79,17 @@ Quality levels:
 - **0**: Basic items
 
 ### Adding Custom Notable Items
-Find the `NotableItemsDict` table and add entries:
+The mod includes a curated list of notable items, but you can easily add more!
+
+1. Find the item ID at [platinumgod.co.uk](https://platinumgod.co.uk/)
+2. Open `SeedPlanter.lua` and find the `NotableItemsDict` table (around line 54)
+3. Add your entry in the Repentance items section (line 74+):
+
 ```lua
-[ItemID] = "Item Name",  -- Find IDs at platinumgod.co.uk
+[ItemID] = "Item Name",  -- e.g., [569] = "Blood Oath"
 ```
+
+**Note:** Some Repentance item IDs may be incorrect in the default list. Please verify IDs at platinumgod.co.uk and feel free to correct any errors!
 
 ## Features in Detail
 

@@ -71,18 +71,11 @@ local NotableItemsDict = {
 	[443] = "Apple!", [462] = "Eye of Belial", [489] = "D Infinity", [485] = "Crooked Penny", [495] = "Ghost Pepper", [464] = "Glyph of Balance", [498] = "Duality", [482] = "Clicker", [9] = "Skatole",
 	[496] = "Euthanasia", [506] = "Backstabber", [522] = "Telekinesis", [523] = "Moving Box", [526] = "7 Seals", [530] = "Death's List", [532] = "Lachryphagy", [531] = "Haemolacria", [533] = "Trisagion",
 
-	-- Repentance items (new additions)
-	[562] = "Rock Bottom", [579] = "Spirit Sword", [580] = "Red Key", [588] = "Sol", [589] = "Luna", [591] = "Venus", [592] = "Terra", [593] = "Mars", [594] = "Jupiter", [595] = "Saturn",
-	[596] = "Uranus", [597] = "Pluto", [601] = "120 Volt", [609] = "Eternal D6", [611] = "Larynx", [619] = "Lost Soul", [622] = "Genesis", [623] = "Sharp Key", [624] = "Booster Pack",
-	[625] = "Mega Mush", [626] = "Sacred Orb", [627] = "Recall", [628] = "Death Certificate", [631] = "Meat Cleaver", [632] = "Evil Charm", [635] = "Akeldama", [636] = "R Key",
-	[637] = "Knockout Drops", [638] = "Eraser", [639] = "Yuck Heart", [640] = "Urn of Souls", [641] = "Alabaster Box", [642] = "Magic Skin", [643] = "Revelation", [644] = "Consolation Prize",
-	[645] = "Tinytoma", [649] = "Fruity Plum", [652] = "Portals", [655] = "Spin to Win", [656] = "Damocles", [657] = "Vasculitis", [665] = "Ocular Rift", [667] = "Strawman",
-	[668] = "Dad's Note", [669] = "Sausage", [670] = "Options?", [671] = "Candy Heart", [675] = "Binge Eater", [676] = "Guppy's Eye", [678] = "C Section", [679] = "Lemegeton",
-	[680] = "Sumptorium", [681] = "Recall", [685] = "Jar of Wisps", [687] = "Friend Finder", [689] = "Glitched Crown", [691] = "Tooth and Nail", [692] = "Immaculate Heart",
-	[694] = "Heartbreak", [696] = "Salvation", [697] = "Vanishing Twin", [698] = "Twisted Pair", [699] = "Azazel's Rage", [700] = "Echo Chamber", [701] = "Isaac's Tomb",
-	[703] = "Vengeful Spirit", [704] = "Esau Jr", [705] = "Berserk!", [706] = "Dark Arts", [707] = "Abyss", [708] = "Suplex!", [709] = "Bag of Crafting", [710] = "Flip",
-	[711] = "Lemegeton", [712] = "Stitches", [713] = "R Key", [714] = "Spindown Dice", [715] = "Hypercoagulation", [719] = "The Swarm", [720] = "Heartbreak", [721] = "Tooth and Nail",
-	[722] = "Hypercoagulation", [723] = "Ghost Bombs", [728] = "Gello"
+	-- Repentance items (verified notable items only)
+	-- For additional items, find IDs at platinumgod.co.uk and add them below
+	[562] = "Rock Bottom", [579] = "Spirit Sword", [625] = "Mega Mush", [628] = "Death Certificate",
+	[636] = "R Key", [642] = "Magic Skin", [643] = "Revelation", [656] = "Damocles",
+	[678] = "C Section", [689] = "Glitched Crown", [714] = "Spindown Dice"
 }
 				
 
