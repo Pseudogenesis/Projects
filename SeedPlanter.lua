@@ -444,14 +444,13 @@ function seedMod:RecordTransformations() -- Checks for transformations the playe
 	end
 end
 			
-function seedMod:CheckDeadNPC(DeadNPC) -- CheckDeadNPC calls UpdateItemsList() whenever a boss is killed
+function seedMod:CheckDeadNPC(DeadNPC)
+	-- Updates and saves item list whenever a boss is killed
 	if DeadNPC:IsBoss() then
 		if ((Game():GetVictoryLap() == 0) and (trackingItems == 1)) then
-			if DeadNPC.Type == EntityType.ENTITY_THE_LAMB and Game():GetLevel():GetName() == "Dark Room" then -- CheckDeadNPC only saves info after killing The Lamb, in case the player does a Victory Lap, which doesn't trigger the PRE_GAME_EXIT callback. 
-				seedMod:UpdateItemsList(false)
-			else
-				seedMod:UpdateItemsList(true) -- true means UpdateItemsList() will not call SaveInfo() at the end, so that killing multiple bosses at once doesn't cause performance issues (this was easily visible when killing segmented bosses like Pin)
-			end
+			-- Save after every boss kill now
+			-- This ensures the log updates throughout the run
+			seedMod:UpdateItemsList(false)
 		else
 			trackingItems = 0
 		end
