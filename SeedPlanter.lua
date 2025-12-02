@@ -704,19 +704,22 @@ function seedMod:RenderUI()
 
 	local seeds = seedMod:ParseSeedHistory()
 	if #seeds == 0 then
-		-- Display "no seeds" message
+		-- Display "no seeds" message with proportional positioning
 		local font = Font()
 		font:Load("font/upheaval.fnt")
 		local screenWidth = Isaac.GetScreenWidth()
 		local screenHeight = Isaac.GetScreenHeight()
 
+		local topMargin = math.floor(screenHeight * 0.1)  -- 10% from top
+		local bottomMargin = math.floor(screenHeight * 0.05)  -- 5% from bottom
+
 		local title = "SEED PLANTER - No Seeds Recorded"
 		local titleWidth = font:GetStringWidth(title)
-		font:DrawString(title, screenWidth/2 - titleWidth/2, 50, KColor(1,1,1,1), 0, true)
+		font:DrawString(title, screenWidth/2 - titleWidth/2, topMargin, KColor(1,1,1,1), 0, true)
 
 		local hint = "Press F2 to close"
 		local hintWidth = font:GetStringWidth(hint)
-		font:DrawString(hint, screenWidth/2 - hintWidth/2, screenHeight - 30, KColor(0.7,0.7,0.7,1), 0, true)
+		font:DrawString(hint, screenWidth/2 - hintWidth/2, screenHeight - bottomMargin, KColor(0.7,0.7,0.7,1), 0, true)
 		return
 	end
 
@@ -725,9 +728,15 @@ function seedMod:RenderUI()
 	font:Load("font/upheaval.fnt")
 	local screenWidth = Isaac.GetScreenWidth()
 	local screenHeight = Isaac.GetScreenHeight()
-	local leftMargin = 30
+
+	-- Proportional scaling for consistent look across all screen sizes
+	local leftMargin = math.floor(screenWidth * 0.03)  -- 3% of screen width
+	local topMargin = math.floor(screenHeight * 0.05)  -- 5% of screen height
+	local footerHeight = math.floor(screenHeight * 0.05)  -- 5% for footer area
+	local minSeedHeight = math.floor(screenHeight * 0.05)  -- 5% minimum per seed
+
 	local maxWidth = screenWidth - (leftMargin * 2) -- Leave margins on both sides
-	local yPos = 30
+	local yPos = topMargin
 
 	-- Title
 	local title = "SEED PLANTER - Recent Seeds"
@@ -735,8 +744,8 @@ function seedMod:RenderUI()
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
 	yPos = yPos + 20
 
-	-- Calculate available vertical space (leave room for footer and padding)
-	local maxY = screenHeight - 70  -- Increased buffer for footer
+	-- Calculate available vertical space (88% of screen, rest for title/footer)
+	local maxY = math.floor(screenHeight * 0.88)
 	local visibleCount = 0
 	local startIdx = uiScrollOffset + 1
 	local endIdx = startIdx
@@ -744,8 +753,8 @@ function seedMod:RenderUI()
 	-- Dynamically render seeds until we run out of vertical space
 	for i = startIdx, #seeds do
 		-- Check if we have space for another seed BEFORE rendering it
-		-- Each seed takes at least 25-30px minimum, so check conservatively
-		if visibleCount > 0 and yPos + 25 > maxY then
+		-- Uses proportional minimum height check (scales with screen)
+		if visibleCount > 0 and yPos + minSeedHeight > maxY then
 			-- No more vertical space - stop here
 			break
 		end
@@ -914,8 +923,10 @@ function seedMod:RenderUI()
 	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
 	footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
+	-- Footer positioned proportionally from bottom (5% of screen height)
 	local footerWidth = font:GetStringWidth(footer)
-	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 25, KColor(0.7,0.7,0.7,1), 0, true)
+	local footerY = screenHeight - footerHeight
+	font:DrawString(footer, screenWidth/2 - footerWidth/2, footerY, KColor(0.7,0.7,0.7,1), 0, true)
 
 	-- Store endIdx for scroll calculations
 	lastRenderedEndIdx = endIdx
