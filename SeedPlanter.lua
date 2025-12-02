@@ -277,52 +277,85 @@ function seedMod:GetRunData()
 end
 	
 	
-function seedMod:SaveInfo() -- The main logical structure of the program. If there was ever something I was going to refactor, it'd be this. Although it's *much* cleaner now that I moved several major code blocks into their own functions. 
+function seedMod:SaveInfo()
+	-- Main save logic with safeguards to prevent data loss
 	if Game():GetVictoryLap() == 0 then
 		local masterTable = {}
 		local lastSeedTable = {}
 		local runData = seedMod:GetRunData()
 		seedData = ""
 		trackingItems = 1
-		-- datetime = string.gsub(datetime, "/", "-") -- "/"s gets turned into "\/" after being parsed by JSON4Lua, which looks really weird. "-"s circumvent this
 		seedData = Isaac.LoadModData(seedMod)
-		
-		if string.len(seedData) == 0 then -- If the save file is completely empty, i.e. somebody just installed the mod
+
+		if string.len(seedData) == 0 then
+			-- Empty save file - first time user
 			firstTimeUser = true
 			runData = seedMod:CustomEncode(runData)
 			seedData = runData
 			Isaac.SaveModData(seedMod, seedData)
 			currentRunDataExists = true
 		else
+			-- Try to parse existing save data
 			masterTable, lastSeedTable = seedMod:IsolateSeeds(seedData)
+
+			-- CRITICAL: Check if parsing failed
+			if #masterTable == 0 or not lastSeedTable then
+				-- Parsing failed! Do NOT overwrite the save file
+				-- Just append our new data to the end and hope for the best
+				if Isaac.ConsoleOutput then
+					Isaac.ConsoleOutput("Seed Planter: Warning - Could not parse existing save data. Appending new seed without modifying old data.\n")
+				end
+
+				-- Encode the new run data
+				local encodedNewRun = seedMod:CustomEncode(runData)
+
+				-- Append to existing data instead of replacing
+				seedData = seedData .. "\n" .. encodedNewRun
+				Isaac.SaveModData(seedMod, seedData)
+				currentRunDataExists = true
+				return -- Exit early to prevent further processing
+			end
 		end
-		if (not currentRunDataExists) and (not firstTimeUser) then -- If it's a new run, append a new table with the current run's data to the master table
+
+		-- Normal processing if parsing succeeded
+		if (not currentRunDataExists) and (not firstTimeUser) then
+			-- New run - add to master table
 			table.insert(masterTable, 1, runData)
 			masterTable[1] = seedMod:CustomEncode(masterTable[1])
 			currentRunDataExists = true
-		elseif currentRunDataExists and (not firstTimeUser) then -- If it's a continued run, then just edit the existing items list.
-			masterTable[1] = lastSeedTable
-			if string.len(masterTable[1].Items) < string.len(currentItems) then -- Comparing lengths prevents things like complete item rerolls from deleting the existing item data. Old will be overwritten if the new notable items list exceeds it in length
-				masterTable[1] = runData
-			elseif masterTable[1].Items == "No notable items" and currentItems ~= "No notable items" then -- Ensures that short currentItems lists, like "20-20, Tech 2" would overwrite the "No notable items" string. 
-				masterTable[1] = runData
+		elseif currentRunDataExists and (not firstTimeUser) then
+			-- Continued run - update existing entry
+			-- Safety check: ensure lastSeedTable has required fields
+			if type(lastSeedTable) == "table" and lastSeedTable.Items then
+				masterTable[1] = lastSeedTable
+				if string.len(lastSeedTable.Items or "") < string.len(currentItems) then
+					masterTable[1] = runData
+				elseif lastSeedTable.Items == "No notable items" and currentItems ~= "No notable items" then
+					masterTable[1] = runData
+				else
+					masterTable[1].Transformations = runData.Transformations
+					masterTable[1].Floor = runData.Floor -- Update floor progress
+					masterTable[1].QualityItems = runData.QualityItems -- Update quality items
+				end
+				masterTable[1] = seedMod:CustomEncode(masterTable[1])
 			else
-				masterTable[1].Transformations = runData.Transformations
-				-- Run length will also be set here, when I implement it
+				-- lastSeedTable is invalid, create new entry
+				table.insert(masterTable, 1, seedMod:CustomEncode(runData))
+				currentRunDataExists = true
 			end
-			masterTable[1] = seedMod:CustomEncode(masterTable[1])
 		end
-		
-		if (not firstTimeUser) then -- We only save the data if they're not a first time user. If they are (ie have just installed the mod) then their data has already been saved at this point.
-			table.insert(masterTable, 1, "SEEDS ARE IN CHRONOLOGICAL ORDER. The top seed is the newest, the bottom seed is the oldest. Enjoy!\n") -- This message stays at the top every time because of the way IsolateSeeds() handles reading the log. 
+
+		if (not firstTimeUser) then
+			-- Save the updated data
+			table.insert(masterTable, 1, "SEEDS ARE IN CHRONOLOGICAL ORDER. The top seed is the newest, the bottom seed is the oldest. Enjoy!\n")
 			seedData = table.concat(masterTable)
 			Isaac.SaveModData(seedMod, seedData)
 		else
 			firstTimeUser = false
 		end
-		
+
 	else
-		trackingItems = 0 -- VICTORY LAPS MUST DIE
+		trackingItems = 0 -- Victory laps not tracked
 	end
 end
 
@@ -358,13 +391,17 @@ function seedMod:UpdateItemsList(fromBossKill)
 			if player:HasCollectible(itemID) then
 				local item = itemConfig:GetCollectible(itemID)
 				if item and seedMod:ShouldLogItem(itemID) then
-					numberOfQualityItems = numberOfQualityItems + 1
+					-- Use the item's name - in Repentance this should be localized
 					local itemName = item.Name
-					if numberOfQualityItems > 1 then
-						table.insert(qualityItemBuffer, ", ")
-						table.insert(qualityItemBuffer, itemName)
-					else
-						table.insert(qualityItemBuffer, itemName)
+					-- Check if it's a constant (starts with #) and skip it
+					if string.sub(itemName, 1, 1) ~= "#" then
+						numberOfQualityItems = numberOfQualityItems + 1
+						if numberOfQualityItems > 1 then
+							table.insert(qualityItemBuffer, ", ")
+							table.insert(qualityItemBuffer, itemName)
+						else
+							table.insert(qualityItemBuffer, itemName)
+						end
 					end
 				end
 			end
@@ -628,12 +665,20 @@ function seedMod:RenderUI()
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 30, KColor(0.7,0.7,0.7,1), 0, true)
 end
 
+-- Track previous tab state to prevent multiple triggers
+local lastTabState = false
+
 function seedMod:OnUpdate()
 	-- Check for TAB key press to toggle UI
 	-- Using MC_POST_UPDATE to check keyboard input each frame
-	if Input.IsButtonTriggered(Keyboard.KEY_TAB, 0) then
+	local tabPressed = Input.IsButtonPressed(Keyboard.KEY_TAB, 0)
+
+	-- Only toggle when tab transitions from not pressed to pressed
+	if tabPressed and not lastTabState then
 		seedMod:ToggleUI()
 	end
+
+	lastTabState = tabPressed
 end
 
 -- CALLBACKS
