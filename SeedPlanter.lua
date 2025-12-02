@@ -198,12 +198,15 @@ function seedMod:CustomEncode(tbl) -- Bundles json.encode() with our own pretty 
 end
 
 function seedMod:CustomDecode(str) -- Decodes pretty-printed JSON back to table
+	-- First, try to reverse the pretty formatting
 	local decodedSeed = seedMod:ReverseExtraPretty(str)
+
 	-- Remove all whitespace formatting (newlines, carriage returns, extra spaces)
 	decodedSeed = string.gsub(decodedSeed, "\r\n", "")
 	decodedSeed = string.gsub(decodedSeed, "\n", "")
 	decodedSeed = string.gsub(decodedSeed, "\r", "")
-	-- Remove indentation spaces (but keep spaces within quoted strings)
+
+	-- Remove indentation spaces carefully (preserve spaces in quoted strings)
 	decodedSeed = string.gsub(decodedSeed, "%s+", " ")
 	decodedSeed = string.gsub(decodedSeed, " :", ":")
 	decodedSeed = string.gsub(decodedSeed, ": ", ":")
@@ -211,19 +214,44 @@ function seedMod:CustomDecode(str) -- Decodes pretty-printed JSON back to table
 	decodedSeed = string.gsub(decodedSeed, ", ", ",")
 	decodedSeed = string.gsub(decodedSeed, "{ ", "{")
 	decodedSeed = string.gsub(decodedSeed, " }", "}")
-	decodedSeed = json.decode(decodedSeed)
-	return decodedSeed
+	decodedSeed = string.gsub(decodedSeed, " %[", "[")
+	decodedSeed = string.gsub(decodedSeed, "%[ ", "[")
+
+	-- Try to decode with error handling
+	local success, result = pcall(json.decode, decodedSeed)
+	if success then
+		return result
+	else
+		-- If decode fails, log error and return nil
+		if Isaac.ConsoleOutput then
+			Isaac.ConsoleOutput("Seed Planter: Failed to decode seed data - " .. tostring(result) .. "\n")
+		end
+		return nil
+	end
 end
 
 
 
-function seedMod:IsolateSeeds(data) -- Takes the log data, extracts the most recent seed info, and separates it into two parts: The last seed data, and the rest of the file.  
-	local master = {}			-- This is to make it easier for us to 
+function seedMod:IsolateSeeds(data) -- Takes the log data, extracts the most recent seed info, and separates it into two parts: The last seed data, and the rest of the file.
+	local master = {}
 	local lastSeed = ""
 	lastSeed = string.match(data, "{.-}")
+
+	if not lastSeed then
+		-- No valid seed data found
+		return {}, {}
+	end
+
 	lastTable = seedMod:CustomDecode(lastSeed)
+
+	-- If decode failed, return empty table to prevent crashes
+	if not lastTable then
+		lastTable = {}
+	end
+
 	table.insert(master, lastSeed)
-	table.insert(master, string.match(data, "}(.*)"))
+	local remainder = string.match(data, "}(.*)")
+	table.insert(master, remainder or "")
 	return master, lastTable
 end
 
@@ -463,14 +491,15 @@ end
 
 function seedMod:ReverseExtraPretty(inboundSaveData)
 	-- Reverses ExtraPretty() formatting so JSON can be parsed again
-	-- Handle both new and old format (old format had "Date" instead of "Floor")
+	-- Handle all possible fields from various versions
 	inboundSaveData = string.gsub(inboundSaveData, 'Mode: ', '"Mode":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Name: ', '"Name":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Items: ', '"Items":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items: ', '"QualityItems":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Seed: ', '"Seed":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Floor: ', '"Floor":')
-	inboundSaveData = string.gsub(inboundSaveData, 'Date: ', '"Date":') -- Old format compatibility
+	inboundSaveData = string.gsub(inboundSaveData, 'Date: ', '"Date":') -- Old format
+	inboundSaveData = string.gsub(inboundSaveData, 'Length: ', '"Length":') -- Old format
 	inboundSaveData = string.gsub(inboundSaveData, 'Transformations: ', '"Transformations":')
 	return inboundSaveData
 end
@@ -506,7 +535,10 @@ function seedMod:ParseSeedHistory()
 	-- Split the data by seed entries (each starts with "{" and ends with "}")
 	for seedEntry in string.gmatch(savedData, "{.-}") do
 		local decodedSeed = seedMod:CustomDecode(seedEntry)
-		table.insert(seeds, decodedSeed)
+		-- Only add successfully decoded seeds
+		if decodedSeed and type(decodedSeed) == "table" then
+			table.insert(seeds, decodedSeed)
+		end
 	end
 
 	return seeds
