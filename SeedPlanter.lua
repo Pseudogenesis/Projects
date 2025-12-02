@@ -730,12 +730,14 @@ function seedMod:RenderUI()
 	local screenHeight = Isaac.GetScreenHeight()
 
 	-- Proportional scaling for consistent look across all screen sizes
-	local leftMargin = math.floor(screenWidth * 0.03)  -- 3% of screen width
+	-- Increased left margin to avoid overlapping Isaac's native HUD (stats, items, etc.)
+	local leftMargin = math.floor(screenWidth * 0.12)  -- 12% of screen width for HUD clearance
+	local rightMargin = math.floor(screenWidth * 0.03)  -- 3% on right (less UI there)
 	local topMargin = math.floor(screenHeight * 0.05)  -- 5% of screen height
 	local footerReserve = math.floor(screenHeight * 0.12)  -- 12% reserved for footer
 	local minSeedHeight = math.floor(screenHeight * 0.13)  -- 13% minimum per seed (very conservative)
 
-	local maxWidth = screenWidth - (leftMargin * 2) -- Leave margins on both sides
+	local maxWidth = screenWidth - leftMargin - rightMargin -- Account for asymmetric margins
 	local yPos = topMargin
 
 	-- Title
@@ -928,8 +930,13 @@ function seedMod:RenderUI()
 	local footerWidth = font:GetStringWidth(footer)
 	local footerY = math.floor(screenHeight * 0.90)  -- Position at 90% to stay on screen
 
-	-- Check if footer text fits on screen, abbreviate if necessary
-	if footerWidth > maxWidth then
+	-- Calculate footer X position with margins to avoid HUD overlap
+	-- Use left margin to clear trinkets/cards, ensure right side clears item names
+	local footerMargin = math.floor(screenWidth * 0.08)  -- 8% margin on each side for footer
+	local footerMaxWidth = screenWidth - (footerMargin * 2)
+
+	-- Check if footer text fits within safe area, abbreviate if necessary
+	if footerWidth > footerMaxWidth then
 		-- Ultra-compact format if text is too long
 		footer = "F2 | "
 		if hasMoreSeeds or canScrollUp then
@@ -945,7 +952,9 @@ function seedMod:RenderUI()
 		footerWidth = font:GetStringWidth(footer)
 	end
 
-	font:DrawString(footer, screenWidth/2 - footerWidth/2, footerY, KColor(0.7,0.7,0.7,1), 0, true)
+	-- Center footer within safe area (between footerMargins)
+	local footerX = footerMargin + (footerMaxWidth / 2) - (footerWidth / 2)
+	font:DrawString(footer, footerX, footerY, KColor(0.7,0.7,0.7,1), 0, true)
 
 	-- Store endIdx for scroll calculations
 	lastRenderedEndIdx = endIdx
