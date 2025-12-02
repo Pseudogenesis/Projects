@@ -735,17 +735,23 @@ function seedMod:RenderUI()
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
 	yPos = yPos + 20
 
-	-- Calculate available vertical space (leave room for footer)
-	local maxY = screenHeight - 55
+	-- Calculate available vertical space (leave room for footer and padding)
+	local maxY = screenHeight - 70  -- Increased buffer for footer
 	local visibleCount = 0
 	local startIdx = uiScrollOffset + 1
 	local endIdx = startIdx
 
 	-- Dynamically render seeds until we run out of vertical space
 	for i = startIdx, #seeds do
+		-- Check if we have space for another seed BEFORE rendering it
+		-- Each seed takes at least 25-30px minimum, so check conservatively
+		if visibleCount > 0 and yPos + 25 > maxY then
+			-- No more vertical space - stop here
+			break
+		end
+
 		local seed = seeds[i]
 		local lineColor = KColor(1,1,1,1)
-		local seedStartY = yPos
 
 		-- Seed info (compact format)
 		local seedLine = string.format("%d. %s - %s (%s)", i, seed.Seed or "???", seed.Name or "Unknown", seed.Mode or "Unknown")
@@ -879,21 +885,7 @@ function seedMod:RenderUI()
 
 		yPos = yPos + 6 -- Compact spacing between entries
 
-		-- Check if we've exceeded available vertical space
-		if yPos > maxY then
-			-- Don't include this seed if it doesn't fit (unless it's the only one)
-			if visibleCount > 0 then
-				endIdx = i - 1
-				break
-			else
-				-- Always show at least one seed even if it doesn't fully fit
-				endIdx = i
-				visibleCount = 1
-				break
-			end
-		end
-
-		-- This seed fit, include it
+		-- This seed was successfully rendered, include it in the count
 		endIdx = i
 		visibleCount = visibleCount + 1
 	end
