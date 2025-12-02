@@ -19,7 +19,7 @@ A comprehensive seed logging mod for **The Binding of Isaac: Repentance+** that 
 ✨ **Repentance+ Compatibility**: Updated for all Repentance content
 ✨ **Tainted Character Support**: Properly detects and logs tainted characters
 ✨ **Item Quality System**: Logs items based on the game's quality rating (0-4)
-✨ **In-Game UI**: Press TAB to view your recent seeds while playing
+✨ **In-Game UI**: Press F2 to view your recent seeds while playing
 ✨ **Floor Tracking**: See how far you got in each run
 ✨ **Expanded Item List**: Includes hundreds of new Repentance items
 ✨ **Updated Transformations**: Includes Stompy and Super Bum
@@ -40,9 +40,9 @@ The mod works automatically! Just play the game normally. After each run, your s
 ### Viewing Seed History
 
 **In-Game (New!)**
-- Press **TAB** during a run to open the seed history UI
+- Press **F2** during a run to open the seed history UI
 - View your last 8 seeds with full details
-- Press **TAB** again to close
+- Press **F2** again to close
 
 **From File**
 - Find your seed log at: `[Isaac Save Folder]/[Mod Name]/save1.dat`
@@ -108,7 +108,7 @@ The in-game overlay shows:
 - Transformations achieved
 - Items collected
 
-Press TAB to toggle the UI on/off. You can also use the console command:
+Press F2 to toggle the UI on/off. You can also use the console command:
 ```
 lua seedMod:ToggleUI()
 ```
@@ -153,7 +153,7 @@ Feel free to modify and share! Credit appreciated but not required.
 - Added Repentance+ compatibility
 - Added tainted character support
 - Added item quality filtering system
-- Added in-game UI (TAB to toggle)
+- Added in-game UI (F2 to toggle)
 - Added floor tracking
 - Updated transformations list (Stompy, Super Bum)
 - Expanded notable items with 100+ Repentance items

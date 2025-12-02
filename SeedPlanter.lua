@@ -6,13 +6,13 @@
 	 - Dual item tracking: Notable items + Quality-based filtering
 	 - Transformation tracking (all 15 transformations including Stompy & Super Bum)
 	 - Floor progression tracking
-	 - In-game UI for viewing seed history (Press TAB to toggle)
+	 - In-game UI for viewing seed history (Press F2 to toggle)
 	 - Challenge mode support
 	 - Victory lap handling
 
 	 USAGE:
 	 - The mod works automatically - just play!
-	 - Press TAB in-game to view your seed history
+	 - Press F2 in-game to view your seed history
 	 - Or check the save file in your Isaac mods folder
 	 - Console command: lua seedMod:ToggleUI()
 
@@ -606,7 +606,7 @@ function seedMod:RenderUI()
 		local titleWidth = font:GetStringWidth(title)
 		font:DrawString(title, screenWidth/2 - titleWidth/2, 50, KColor(1,1,1,1), 0, true)
 
-		local hint = "Press TAB to close"
+		local hint = "Press F2 to close"
 		local hintWidth = font:GetStringWidth(hint)
 		font:DrawString(hint, screenWidth/2 - hintWidth/2, screenHeight - 30, KColor(0.7,0.7,0.7,1), 0, true)
 		return
@@ -652,40 +652,82 @@ function seedMod:RenderUI()
 			yPos = yPos + 12
 		end
 
-		-- Items (truncate if too long)
+		-- Items (word-wrap if too long)
 		if seed.Items and seed.Items ~= "No notable items" then
 			local itemsText = seed.Items
-			if string.len(itemsText) > 80 then
-				itemsText = string.sub(itemsText, 1, 77) .. "..."
+			local maxLineLength = 70 -- Characters per line
+
+			-- Split into multiple lines if too long
+			if string.len(itemsText) > maxLineLength then
+				local words = {}
+				for word in string.gmatch(itemsText, "[^,]+") do
+					table.insert(words, word)
+				end
+
+				local currentLine = "   Items: "
+				local lineCount = 0
+
+				for i, word in ipairs(words) do
+					local testLine = currentLine .. word
+					if i < #words then
+						testLine = testLine .. ","
+					end
+
+					if string.len(testLine) > maxLineLength and currentLine ~= "   Items: " then
+						-- Print current line and start new one
+						font:DrawString(currentLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
+						yPos = yPos + 12
+						lineCount = lineCount + 1
+						currentLine = "          " .. word
+						if i < #words then
+							currentLine = currentLine .. ","
+						end
+
+						-- Limit to 2 lines to prevent overflow
+						if lineCount >= 2 then
+							currentLine = currentLine .. "..."
+							break
+						end
+					else
+						currentLine = testLine
+					end
+				end
+
+				-- Print final line
+				font:DrawString(currentLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
+				yPos = yPos + 12
+			else
+				-- Short enough to fit on one line
+				local itemLine = "   Items: " .. itemsText
+				font:DrawString(itemLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
+				yPos = yPos + 12
 			end
-			local itemLine = "   Items: " .. itemsText
-			font:DrawString(itemLine, 50, yPos, KColor(0.8,1,0.8,1), 0, true)
-			yPos = yPos + 12
 		end
 
 		yPos = yPos + 8 -- Spacing between entries
 	end
 
 	-- Footer with controls
-	local footer = "Press TAB to close | " .. string.format("Showing %d-%d of %d seeds", startIdx, endIdx, #seeds)
+	local footer = "Press F2 to close | " .. string.format("Showing %d-%d of %d seeds", startIdx, endIdx, #seeds)
 	local footerWidth = font:GetStringWidth(footer)
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 30, KColor(0.7,0.7,0.7,1), 0, true)
 end
 
--- Track previous tab state to prevent multiple triggers
-local lastTabState = false
+-- Track previous key state to prevent multiple triggers
+local lastKeyState = false
 
 function seedMod:OnUpdate()
-	-- Check for TAB key press to toggle UI
+	-- Check for F2 key press to toggle UI
 	-- Using MC_POST_UPDATE to check keyboard input each frame
-	local tabPressed = Input.IsButtonPressed(Keyboard.KEY_TAB, 0)
+	-- F2 chosen to avoid conflicts with game's Tab key (map toggle)
+	local keyPressed = Input.IsButtonPressed(Keyboard.KEY_F2, 0)
 
-	-- Only toggle when tab transitions from not pressed to pressed
-	if tabPressed and not lastTabState then
+	-- Only toggle when key transitions from not pressed to pressed
+	if keyPressed and not lastKeyState then
 		seedMod:ToggleUI()
 	end
 
-	lastTabState = tabPressed
+	lastKeyState = keyPressed
 end
 
 -- CALLBACKS
