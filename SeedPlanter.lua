@@ -528,16 +528,31 @@ end
 
 function seedMod:ReverseExtraPretty(inboundSaveData)
 	-- Reverses ExtraPretty() formatting so JSON can be parsed again
-	-- Handle all possible fields from various versions
+	-- Handle all possible fields from various versions, with and without spaces after colons
+	-- IMPORTANT: Process longer patterns first to avoid partial matches
+
+	-- Process with spaces first (preferred format) - longer patterns first
+	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items: ', '"QualityItems":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Transformations: ', '"Transformations":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Items: ', '"Items":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Mode: ', '"Mode":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Name: ', '"Name":')
-	inboundSaveData = string.gsub(inboundSaveData, 'Items: ', '"Items":')
-	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items: ', '"QualityItems":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Seed: ', '"Seed":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Floor: ', '"Floor":')
-	inboundSaveData = string.gsub(inboundSaveData, 'Date: ', '"Date":') -- Old format
-	inboundSaveData = string.gsub(inboundSaveData, 'Length: ', '"Length":') -- Old format
-	inboundSaveData = string.gsub(inboundSaveData, 'Transformations: ', '"Transformations":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Date: ', '"Date":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Length: ', '"Length":')
+
+	-- Process without spaces (legacy/corrupted format) - longer patterns first
+	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items:', '"QualityItems":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Transformations:', '"Transformations":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Items:', '"Items":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Mode:', '"Mode":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Name:', '"Name":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Seed:', '"Seed":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Floor:', '"Floor":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Date:', '"Date":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Length:', '"Length":')
+
 	return inboundSaveData
 end
 
