@@ -644,11 +644,14 @@ end
 -- IN-GAME UI FUNCTIONS
 
 local uiScrollOffset = 0
-local MAX_VISIBLE_SEEDS = 5  -- Optimized to fill screen while preventing overflow
+local MAX_VISIBLE_SEEDS = 5  -- Starting point for dynamic display (actual count varies)
 
 -- Performance optimization: Cache parsed seed data to avoid re-parsing every frame
 local cachedSeeds = nil
 local cacheNeedsRefresh = true
+
+-- Track last rendered seed index for scroll calculations
+local lastRenderedEndIdx = 0
 
 function seedMod:ToggleUI()
 	-- Toggle the seed history UI on/off
@@ -732,13 +735,17 @@ function seedMod:RenderUI()
 	font:DrawString(title, screenWidth/2 - titleWidth/2, yPos, KColor(1,1,0.5,1), 0, true)
 	yPos = yPos + 20
 
-	-- Draw visible seeds
+	-- Calculate available vertical space (leave room for footer)
+	local maxY = screenHeight - 55
+	local visibleCount = 0
 	local startIdx = uiScrollOffset + 1
-	local endIdx = math.min(startIdx + MAX_VISIBLE_SEEDS - 1, #seeds)
+	local endIdx = startIdx
 
-	for i = startIdx, endIdx do
+	-- Dynamically render seeds until we run out of vertical space
+	for i = startIdx, #seeds do
 		local seed = seeds[i]
 		local lineColor = KColor(1,1,1,1)
+		local seedStartY = yPos
 
 		-- Seed info (compact format)
 		local seedLine = string.format("%d. %s - %s (%s)", i, seed.Seed or "???", seed.Name or "Unknown", seed.Mode or "Unknown")
@@ -752,10 +759,51 @@ function seedMod:RenderUI()
 			yPos = yPos + 11
 		end
 
-		-- Transformations
+		-- Transformations (with text wrapping)
 		if seed.Transformations and seed.Transformations ~= "None" then
-			local transLine = "Trans: " .. seed.Transformations
-			font:DrawString(transLine, leftMargin + 10, yPos, KColor(1,0.8,1,1), 0, true)
+			local transText = seed.Transformations
+			local prefix = "Trans: "
+			local indent = "       "
+			local prefixWidth = font:GetStringWidth(prefix)
+			local indentWidth = font:GetStringWidth(indent)
+
+			-- Split transformations by comma
+			local transformations = {}
+			for trans in string.gmatch(transText, "[^,]+") do
+				table.insert(transformations, trans)
+			end
+
+			local currentLine = prefix
+			local currentWidth = prefixWidth
+			local transLineCount = 0
+
+			for idx, trans in ipairs(transformations) do
+				local transText = trans
+				if idx < #transformations then
+					transText = transText .. ","
+				end
+
+				local transWidth = font:GetStringWidth(transText)
+
+				-- Check if adding this transformation would exceed width
+				if currentWidth + transWidth > maxWidth and currentLine ~= prefix then
+					-- Print current line and start new one
+					font:DrawString(currentLine, leftMargin + 10, yPos, KColor(1,0.8,1,1), 0, true)
+					yPos = yPos + 11
+					transLineCount = transLineCount + 1
+
+					-- Start new line with indentation
+					currentLine = indent .. transText
+					currentWidth = indentWidth + transWidth
+				else
+					-- Add to current line
+					currentLine = currentLine .. transText
+					currentWidth = currentWidth + transWidth
+				end
+			end
+
+			-- Print final line
+			font:DrawString(currentLine, leftMargin + 10, yPos, KColor(1,0.8,1,1), 0, true)
 			yPos = yPos + 11
 		end
 
@@ -830,18 +878,39 @@ function seedMod:RenderUI()
 		end
 
 		yPos = yPos + 6 -- Compact spacing between entries
+
+		-- Check if we've exceeded available vertical space
+		if yPos > maxY then
+			-- Don't include this seed if it doesn't fit (unless it's the only one)
+			if visibleCount > 0 then
+				endIdx = i - 1
+				break
+			else
+				-- Always show at least one seed even if it doesn't fully fit
+				endIdx = i
+				visibleCount = 1
+				break
+			end
+		end
+
+		-- This seed fit, include it
+		endIdx = i
+		visibleCount = visibleCount + 1
 	end
 
 	-- Footer with controls (clean, compact format)
 	local footer = "F2: Close | "
 
 	-- Show scroll hints based on position
-	if #seeds > MAX_VISIBLE_SEEDS then
-		local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
+	-- Calculate max offset based on total seeds and how many we can show
+	local hasMoreSeeds = endIdx < #seeds
+	local canScrollUp = uiScrollOffset > 0
+
+	if hasMoreSeeds or canScrollUp then
 		if uiScrollOffset == 0 then
 			-- At top - can only scroll down
 			footer = footer .. "Down: More seeds | "
-		elseif uiScrollOffset >= maxOffset then
+		elseif not hasMoreSeeds then
 			-- At bottom - can only scroll up
 			footer = footer .. "Up: More seeds | "
 		else
@@ -855,6 +924,9 @@ function seedMod:RenderUI()
 
 	local footerWidth = font:GetStringWidth(footer)
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 25, KColor(0.7,0.7,0.7,1), 0, true)
+
+	-- Store endIdx for scroll calculations
+	lastRenderedEndIdx = endIdx
 end
 
 -- Track previous key states to prevent multiple triggers
@@ -890,8 +962,8 @@ function seedMod:OnUpdate()
 		-- Scroll down (show later seeds)
 		if downPressed and not lastDownKeyState then
 			local seeds = seedMod:ParseSeedHistory()
-			local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
-			if uiScrollOffset < maxOffset then
+			-- Allow scrolling if the last rendered seed isn't the final seed
+			if lastRenderedEndIdx < #seeds then
 				uiScrollOffset = uiScrollOffset + 1
 			end
 		end
