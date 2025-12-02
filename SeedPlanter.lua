@@ -803,31 +803,29 @@ function seedMod:RenderUI()
 		yPos = yPos + 6 -- Compact spacing between entries
 	end
 
-	-- Footer with controls and scroll indicators (more compact format)
-	local footer = "F2: Close"
+	-- Footer with controls (clean, compact format)
+	local footer = "F2: Close | "
+
+	-- Show scroll hints based on position
 	if #seeds > MAX_VISIBLE_SEEDS then
-		footer = footer .. " | Arrows: Scroll"
+		local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
+		if uiScrollOffset == 0 then
+			-- At top - can only scroll down
+			footer = footer .. "Down: More seeds | "
+		elseif uiScrollOffset >= maxOffset then
+			-- At bottom - can only scroll up
+			footer = footer .. "Up: More seeds | "
+		else
+			-- In middle - can scroll both ways
+			footer = footer .. "Arrows: Scroll | "
+		end
 	end
+
 	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
-	footer = footer .. " | " .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
+	footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
 	local footerWidth = font:GetStringWidth(footer)
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 25, KColor(0.7,0.7,0.7,1), 0, true)
-
-	-- Scroll indicators
-	if uiScrollOffset > 0 then
-		local upArrow = "^ More above ^"
-		local upWidth = font:GetStringWidth(upArrow)
-		font:DrawString(upArrow, screenWidth/2 - upWidth/2, yPos + 5, KColor(1,1,0.5,1), 0, true)
-	end
-
-	-- Show "more below" indicator if there are more seeds to scroll to
-	local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
-	if uiScrollOffset < maxOffset then
-		local downArrow = "v More below v"
-		local downWidth = font:GetStringWidth(downArrow)
-		font:DrawString(downArrow, screenWidth/2 - downWidth/2, screenHeight - 45, KColor(1,1,0.5,1), 0, true)
-	end
 end
 
 -- Track previous key states to prevent multiple triggers
