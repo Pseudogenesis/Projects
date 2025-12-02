@@ -634,7 +634,7 @@ end
 -- IN-GAME UI FUNCTIONS
 
 local uiScrollOffset = 0
-local MAX_VISIBLE_SEEDS = 4  -- Reduced to fit on screen with detailed info
+local MAX_VISIBLE_SEEDS = 5  -- Optimized to fill screen while preventing overflow
 
 function seedMod:ToggleUI()
 	-- Toggle the seed history UI on/off
@@ -737,6 +737,7 @@ function seedMod:RenderUI()
 			local indent = "       "
 			local prefixWidth = font:GetStringWidth(prefix)
 			local indentWidth = font:GetStringWidth(indent)
+			local ellipsisWidth = font:GetStringWidth("...")
 
 			-- Split items by comma
 			local items = {}
@@ -748,6 +749,7 @@ function seedMod:RenderUI()
 			local currentWidth = prefixWidth
 			local lineCount = 0
 			local maxLines = 2 -- Limit to 2 lines per seed
+			local truncated = false
 
 			for idx, item in ipairs(items) do
 				-- Add comma if not first item
@@ -767,10 +769,17 @@ function seedMod:RenderUI()
 
 					-- Check if we've hit max lines
 					if lineCount >= maxLines then
-						-- Print truncation indicator
-						local truncated = indent .. "..."
-						font:DrawString(truncated, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
-						yPos = yPos + 11
+						-- Try to append "..." to current line if it fits
+						if currentWidth + ellipsisWidth <= maxWidth then
+							currentLine = currentLine .. "..."
+							font:DrawString(currentLine, leftMargin + 10, yPos - 11, KColor(0.8,1,0.8,1), 0, true)
+						else
+							-- Print "..." on new line only if necessary
+							local truncLine = indent .. "..."
+							font:DrawString(truncLine, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
+							yPos = yPos + 11
+						end
+						truncated = true
 						break
 					end
 
@@ -785,7 +794,7 @@ function seedMod:RenderUI()
 			end
 
 			-- Print final line if not truncated
-			if lineCount < maxLines then
+			if not truncated then
 				font:DrawString(currentLine, leftMargin + 10, yPos, KColor(0.8,1,0.8,1), 0, true)
 				yPos = yPos + 11
 			end
@@ -794,12 +803,13 @@ function seedMod:RenderUI()
 		yPos = yPos + 6 -- Compact spacing between entries
 	end
 
-	-- Footer with controls and scroll indicators
+	-- Footer with controls and scroll indicators (more compact format)
 	local footer = "F2: Close"
 	if #seeds > MAX_VISIBLE_SEEDS then
-		footer = footer .. " | Up/Down: Scroll"
+		footer = footer .. " | Arrows: Scroll"
 	end
-	footer = footer .. " | " .. string.format("Showing %d-%d of %d", startIdx, endIdx, #seeds)
+	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
+	footer = footer .. " | " .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
 	local footerWidth = font:GetStringWidth(footer)
 	font:DrawString(footer, screenWidth/2 - footerWidth/2, screenHeight - 25, KColor(0.7,0.7,0.7,1), 0, true)
@@ -809,6 +819,14 @@ function seedMod:RenderUI()
 		local upArrow = "^ More above ^"
 		local upWidth = font:GetStringWidth(upArrow)
 		font:DrawString(upArrow, screenWidth/2 - upWidth/2, yPos + 5, KColor(1,1,0.5,1), 0, true)
+	end
+
+	-- Show "more below" indicator if there are more seeds to scroll to
+	local maxOffset = math.max(0, #seeds - MAX_VISIBLE_SEEDS)
+	if uiScrollOffset < maxOffset then
+		local downArrow = "v More below v"
+		local downWidth = font:GetStringWidth(downArrow)
+		font:DrawString(downArrow, screenWidth/2 - downWidth/2, screenHeight - 45, KColor(1,1,0.5,1), 0, true)
 	end
 end
 
