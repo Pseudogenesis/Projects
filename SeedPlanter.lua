@@ -229,14 +229,15 @@ end
 
 function seedMod:GameStartCheck(fromSaveGame)
 	gameStartCheckDone = true
+	currentRunVictory = nil -- Reset victory tracking for new game
 	if fromSaveGame and (Game():GetVictoryLap() == 0) then -- If the game is being started from a save file
 		currentRunDataExists = true -- Tells the mod to edit the current continued run's data instead of creating a whole new seed entry
 		trackingItems = 1
 		seedMod:UpdateItemsList()
 	elseif (not fromSaveGame) and (Game():GetVictoryLap() == 0) then -- If the run is brand new
-		currentRunDataExists = false 
+		currentRunDataExists = false
 		trackingItems = 1
-		seedMod:UpdateItemsList() 
+		seedMod:UpdateItemsList()
 	else
 		trackingItems = 0 -- This condition should only occur during Victory Laps. Victory lap runs have their own seeds, but won't be recorded (because the seeds don't really matter if you've already gone through the game once)
 	end
@@ -308,7 +309,7 @@ function seedMod:IsolateSeeds(data) -- Takes the log data, extracts the most rec
 end
 
 function seedMod:GetRunData()
-	-- Returns a table containing current run data: Seed, character, items, mode/difficulty, transformations, and floor
+	-- Returns a table containing current run data: Seed, character, items, mode/difficulty, transformations, floor, and victory
 	local playerOne = Isaac.GetPlayer(0)
 	local dataTable = {
 		Seed = Game():GetSeeds():GetStartSeedString(),
@@ -317,7 +318,8 @@ function seedMod:GetRunData()
 		Transformations = seedMod:RecordTransformations(),
 		Items = currentItems,
 		QualityItems = currentQualityItems, -- Quality-filtered items
-		Mode = difficultyTable[Game().Difficulty]
+		Mode = difficultyTable[Game().Difficulty],
+		Victory = currentRunVictory -- Track if final boss was defeated
 	}
 
 	-- Override mode for challenges
@@ -530,10 +532,43 @@ function seedMod:RecordTransformations() -- Checks for transformations the playe
 	end
 end
 			
+-- Track if victory has been achieved this run
+local currentRunVictory = nil
+
 function seedMod:CheckDeadNPC(DeadNPC)
 	-- Updates and saves item list whenever a boss is killed
 	if DeadNPC:IsBoss() then
 		if ((Game():GetVictoryLap() == 0) and (trackingItems == 1)) then
+			-- Check if this is a final boss for victory tracking
+			local bossType = DeadNPC.Type
+			local bossName = nil
+
+			-- Final boss entity IDs
+			if bossType == 78 then
+				bossName = "Mom's Heart/It Lives"
+			elseif bossType == 84 then
+				bossName = "Satan"
+			elseif bossType == 102 then
+				bossName = "Isaac/Blue Baby"
+			elseif bossType == 273 then
+				bossName = "The Lamb"
+			elseif bossType == 274 then
+				bossName = "Mega Satan"
+			elseif bossType == 412 then
+				bossName = "Delirium"
+			elseif bossType == 912 then
+				bossName = "Mother"
+			elseif bossType == 951 then
+				bossName = "The Beast"
+			elseif bossType == 406 or bossType == 407 then
+				bossName = "Ultra Greed"
+			end
+
+			-- If we defeated a final boss, mark victory
+			if bossName then
+				currentRunVictory = bossName
+			end
+
 			-- Save after every boss kill now
 			-- This ensures the log updates throughout the run
 			seedMod:UpdateItemsList(false)
@@ -601,6 +636,8 @@ function seedMod:ExtraPretty(outboundSaveData)
 	outboundSaveData = string.gsub(outboundSaveData, '"Seed":', 'Seed: ')
 	outboundSaveData = string.gsub(outboundSaveData, '"Floor":', 'Floor: ')
 	outboundSaveData = string.gsub(outboundSaveData, '"Transformations":', 'Transformations: ')
+	outboundSaveData = string.gsub(outboundSaveData, '"Victory":', 'Victory: ')
+	outboundSaveData = string.gsub(outboundSaveData, '"Favorite":', 'Favorite: ')
 	return outboundSaveData
 end
 
@@ -612,6 +649,8 @@ function seedMod:ReverseExtraPretty(inboundSaveData)
 	-- Process with spaces first (preferred format) - longer patterns first
 	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items: ', '"QualityItems":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Transformations: ', '"Transformations":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Victory: ', '"Victory":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Favorite: ', '"Favorite":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Items: ', '"Items":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Mode: ', '"Mode":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Name: ', '"Name":')
@@ -623,6 +662,8 @@ function seedMod:ReverseExtraPretty(inboundSaveData)
 	-- Process without spaces (legacy/corrupted format) - longer patterns first
 	inboundSaveData = string.gsub(inboundSaveData, 'Quality Items:', '"QualityItems":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Transformations:', '"Transformations":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Victory:', '"Victory":')
+	inboundSaveData = string.gsub(inboundSaveData, 'Favorite:', '"Favorite":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Items:', '"Items":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Mode:', '"Mode":')
 	inboundSaveData = string.gsub(inboundSaveData, 'Name:', '"Name":')
@@ -763,17 +804,40 @@ function seedMod:RenderUI()
 		end
 
 		local seed = seeds[i]
-		local lineColor = KColor(1,1,1,1)
+
+		-- Determine seed quality for highlighting
+		local quality = GetSeedQuality(seed.Items)
+		local lineColor = KColor(1,1,1,1) -- Default white
+
+		if quality == 3 then
+			lineColor = KColor(1,0.84,0,1) -- Gold - Has tier 5 items
+		elseif quality == 2 then
+			lineColor = KColor(0.8,0.5,1,1) -- Purple - 3+ tier 4 items
+		elseif quality == 1 then
+			lineColor = KColor(0.5,1,0.5,1) -- Green - Good run
+		end
+
+		-- Add favorite marker if this seed is favorited
+		local favoriteMarker = ""
+		if seed.Favorite then
+			favoriteMarker = "★ "
+			lineColor = KColor(1,1,0,1) -- Yellow for favorites (overrides quality color)
+		end
 
 		-- Seed info (compact format)
-		local seedLine = string.format("%d. %s - %s (%s)", i, seed.Seed or "???", seed.Name or "Unknown", seed.Mode or "Unknown")
+		local seedLine = string.format("%s%d. %s - %s (%s)", favoriteMarker, i, seed.Seed or "???", seed.Name or "Unknown", seed.Mode or "Unknown")
 		font:DrawString(seedLine, leftMargin, yPos, lineColor, 0, true)
 		yPos = yPos + 13
 
-		-- Floor reached
+		-- Floor reached and victory status
 		if seed.Floor then
 			local floorLine = "Floor: " .. seed.Floor
-			font:DrawString(floorLine, leftMargin + 10, yPos, KColor(0.8,0.8,1,1), 0, true)
+			if seed.Victory then
+				floorLine = floorLine .. " | Victory: " .. seed.Victory
+				font:DrawString(floorLine, leftMargin + 10, yPos, KColor(0.5,1,0.5,1), 0, true) -- Green for victory
+			else
+				font:DrawString(floorLine, leftMargin + 10, yPos, KColor(0.8,0.8,1,1), 0, true)
+			end
 			yPos = yPos + 11
 		end
 
@@ -903,7 +967,7 @@ function seedMod:RenderUI()
 	end
 
 	-- Footer with controls (clean, compact format)
-	local footer = "F2: Close | "
+	local footer = "F2: Close | F: Favorite | "
 
 	-- Show scroll hints based on position
 	-- Calculate max offset based on total seeds and how many we can show
@@ -913,10 +977,10 @@ function seedMod:RenderUI()
 	if hasMoreSeeds or canScrollUp then
 		if uiScrollOffset == 0 then
 			-- At top - can only scroll down
-			footer = footer .. "Down: More seeds | "
+			footer = footer .. "Down: More | "
 		elseif not hasMoreSeeds then
 			-- At bottom - can only scroll up
-			footer = footer .. "Up: More seeds | "
+			footer = footer .. "Up: More | "
 		else
 			-- In middle - can scroll both ways
 			footer = footer .. "Arrows: Scroll | "
@@ -953,6 +1017,89 @@ end
 local lastKeyState = false
 local lastUpKeyState = false
 local lastDownKeyState = false
+local lastFavoriteKeyState = false
+
+-- Helper function to evaluate seed quality for highlighting
+local function GetSeedQuality(itemsString)
+	if not itemsString or itemsString == "No notable items" then
+		return 0 -- No special quality
+	end
+
+	local tier5Count = 0
+	local tier4Count = 0
+	local tier3Count = 0
+
+	-- Check each item in the string against priority tiers
+	for itemName in string.gmatch(itemsString, "[^,]+") do
+		itemName = itemName:gsub("^%s+", ""):gsub("%s+$", "") -- Trim whitespace
+
+		-- Find this item in our dictionary and check its priority
+		for itemID, name in pairs(NotableItemsDict) do
+			if name == itemName then
+				local priority = GetItemPriority(itemID)
+				if priority == 5 then
+					tier5Count = tier5Count + 1
+				elseif priority == 4 then
+					tier4Count = tier4Count + 1
+				elseif priority == 3 then
+					tier3Count = tier3Count + 1
+				end
+				break
+			end
+		end
+	end
+
+	-- Return quality level based on item tiers
+	if tier5Count >= 1 then
+		return 3 -- Gold - Has tier 5 items
+	elseif tier4Count >= 3 then
+		return 2 -- Purple - 3+ tier 4 items
+	elseif tier4Count >= 2 or tier3Count >= 3 then
+		return 1 -- Green - Good run
+	end
+
+	return 0 -- Default white
+end
+
+function seedMod:ToggleFavorite(seedIndex)
+	-- Toggle favorite status for a specific seed
+	local seeds = seedMod:ParseSeedHistory()
+	if seedIndex < 1 or seedIndex > #seeds then
+		return -- Invalid index
+	end
+
+	-- Load the raw save data
+	local savedData = Isaac.LoadModData(seedMod)
+	if string.len(savedData) == 0 then
+		return
+	end
+
+	-- Parse all seeds
+	local seedEntries = {}
+	for seedEntry in string.gmatch(savedData, "{.-}") do
+		table.insert(seedEntries, seedEntry)
+	end
+
+	-- Decode the target seed
+	local targetSeed = seedMod:CustomDecode(seedEntries[seedIndex])
+	if not targetSeed then
+		return
+	end
+
+	-- Toggle favorite status
+	targetSeed.Favorite = not targetSeed.Favorite
+
+	-- Re-encode the seed
+	seedEntries[seedIndex] = seedMod:CustomEncode(targetSeed)
+
+	-- Rebuild the save file
+	local header = "SEEDS ARE IN CHRONOLOGICAL ORDER. The top seed is the newest, the bottom seed is the oldest. Enjoy!\n"
+	local newSaveData = header .. table.concat(seedEntries)
+
+	-- Save
+	Isaac.SaveModData(seedMod, newSaveData)
+	cacheNeedsRefresh = true
+end
 
 function seedMod:OnUpdate()
 	-- Check for F2 key press to toggle UI
@@ -990,6 +1137,16 @@ function seedMod:OnUpdate()
 
 		lastUpKeyState = upPressed
 		lastDownKeyState = downPressed
+
+		-- Check for F key press to toggle favorite for the top visible seed
+		local fPressed = Input.IsButtonPressed(Keyboard.KEY_F, 0)
+
+		if fPressed and not lastFavoriteKeyState then
+			-- Toggle favorite for the top visible seed (the one at scroll offset)
+			seedMod:ToggleFavorite(uiScrollOffset + 1)
+		end
+
+		lastFavoriteKeyState = fPressed
 	end
 end
 
