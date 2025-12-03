@@ -1019,13 +1019,13 @@ function seedMod:RenderUI()
 	if hasMoreSeeds or canScrollUp then
 		if uiScrollOffset == 0 then
 			-- At top - can only scroll down
-			footer = footer .. "Down | "
+			footer = footer .. "v | "
 		elseif not hasMoreSeeds then
 			-- At bottom - can only scroll up
-			footer = footer .. "Up | "
+			footer = footer .. "^ | "
 		else
 			-- In middle - can scroll both ways
-			footer = footer .. "Arrows | "
+			footer = footer .. "^v | "
 		end
 	end
 
