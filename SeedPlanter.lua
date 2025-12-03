@@ -926,34 +926,23 @@ function seedMod:RenderUI()
 	-- Use compact format: "X-Y/Z" instead of "X-Y of Z" to prevent overflow
 	footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
 
-	-- Footer positioned in reserved space at bottom (12% reserved, positioned at 90%)
+	-- Footer positioned higher to clear item names at bottom (positioned at 85%)
 	local footerWidth = font:GetStringWidth(footer)
-	local footerY = math.floor(screenHeight * 0.90)  -- Position at 90% to stay on screen
+	local footerY = math.floor(screenHeight * 0.85)  -- Raised to 85% to vertically clear bottom HUD
 
 	-- Calculate footer X position with margins to avoid HUD overlap
-	-- Use larger margins to clear trinkets/cards on left and item names on right
-	local footerMargin = math.floor(screenWidth * 0.12)  -- 12% margin on each side for footer
+	local footerMargin = math.floor(screenWidth * 0.12)  -- 12% margin on each side
 	local footerMaxWidth = screenWidth - (footerMargin * 2)
-
-	-- Check if footer text fits within safe area, abbreviate if necessary
-	if footerWidth > footerMaxWidth then
-		-- Ultra-compact format if text is too long
-		footer = "F2 | "
-		if hasMoreSeeds or canScrollUp then
-			if uiScrollOffset == 0 then
-				footer = footer .. "↓ | "
-			elseif not hasMoreSeeds then
-				footer = footer .. "↑ | "
-			else
-				footer = footer .. "↕ | "
-			end
-		end
-		footer = footer .. string.format("%d-%d/%d", startIdx, endIdx, #seeds)
-		footerWidth = font:GetStringWidth(footer)
-	end
 
 	-- Center footer within safe area (between footerMargins)
 	local footerX = footerMargin + (footerMaxWidth / 2) - (footerWidth / 2)
+
+	-- If footer is too wide, try to center it as best we can
+	if footerWidth > footerMaxWidth then
+		-- Adjust X to keep footer visible even if slightly wider
+		footerX = math.max(footerMargin, (screenWidth / 2) - (footerWidth / 2))
+	end
+
 	font:DrawString(footer, footerX, footerY, KColor(0.7,0.7,0.7,1), 0, true)
 
 	-- Store endIdx for scroll calculations
