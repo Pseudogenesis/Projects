@@ -694,6 +694,48 @@ local cacheNeedsRefresh = true
 -- Track last rendered seed index for scroll calculations
 local lastRenderedEndIdx = 0
 
+-- Helper function to evaluate seed quality for highlighting
+local function GetSeedQuality(itemsString)
+	if not itemsString or itemsString == "No notable items" then
+		return 0 -- No special quality
+	end
+
+	local tier5Count = 0
+	local tier4Count = 0
+	local tier3Count = 0
+
+	-- Check each item in the string against priority tiers
+	for itemName in string.gmatch(itemsString, "[^,]+") do
+		itemName = itemName:gsub("^%s+", ""):gsub("%s+$", "") -- Trim whitespace
+
+		-- Find this item in our dictionary and check its priority
+		for itemID, name in pairs(NotableItemsDict) do
+			if name == itemName then
+				local priority = GetItemPriority(itemID)
+				if priority == 5 then
+					tier5Count = tier5Count + 1
+				elseif priority == 4 then
+					tier4Count = tier4Count + 1
+				elseif priority == 3 then
+					tier3Count = tier3Count + 1
+				end
+				break
+			end
+		end
+	end
+
+	-- Return quality level based on item tiers
+	if tier5Count >= 1 then
+		return 3 -- Gold - Has tier 5 items
+	elseif tier4Count >= 3 then
+		return 2 -- Purple - 3+ tier 4 items
+	elseif tier4Count >= 2 or tier3Count >= 3 then
+		return 1 -- Green - Good run
+	end
+
+	return 0 -- Default white
+end
+
 function seedMod:ToggleUI()
 	-- Toggle the seed history UI on/off
 	showingUI = not showingUI
@@ -1018,48 +1060,6 @@ local lastKeyState = false
 local lastUpKeyState = false
 local lastDownKeyState = false
 local lastFavoriteKeyState = false
-
--- Helper function to evaluate seed quality for highlighting
-local function GetSeedQuality(itemsString)
-	if not itemsString or itemsString == "No notable items" then
-		return 0 -- No special quality
-	end
-
-	local tier5Count = 0
-	local tier4Count = 0
-	local tier3Count = 0
-
-	-- Check each item in the string against priority tiers
-	for itemName in string.gmatch(itemsString, "[^,]+") do
-		itemName = itemName:gsub("^%s+", ""):gsub("%s+$", "") -- Trim whitespace
-
-		-- Find this item in our dictionary and check its priority
-		for itemID, name in pairs(NotableItemsDict) do
-			if name == itemName then
-				local priority = GetItemPriority(itemID)
-				if priority == 5 then
-					tier5Count = tier5Count + 1
-				elseif priority == 4 then
-					tier4Count = tier4Count + 1
-				elseif priority == 3 then
-					tier3Count = tier3Count + 1
-				end
-				break
-			end
-		end
-	end
-
-	-- Return quality level based on item tiers
-	if tier5Count >= 1 then
-		return 3 -- Gold - Has tier 5 items
-	elseif tier4Count >= 3 then
-		return 2 -- Purple - 3+ tier 4 items
-	elseif tier4Count >= 2 or tier3Count >= 3 then
-		return 1 -- Green - Good run
-	end
-
-	return 0 -- Default white
-end
 
 function seedMod:ToggleFavorite(seedIndex)
 	-- Toggle favorite status for a specific seed
