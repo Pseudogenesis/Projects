@@ -1008,8 +1008,8 @@ function seedMod:RenderUI()
 		visibleCount = visibleCount + 1
 	end
 
-	-- Footer with controls (clean, compact format)
-	local footer = "F2: Close | F: Favorite | "
+	-- Footer with controls (ultra-compact format to prevent overflow)
+	local footer = "F2:Close | F3:Fav | "
 
 	-- Show scroll hints based on position
 	-- Calculate max offset based on total seeds and how many we can show
@@ -1019,13 +1019,13 @@ function seedMod:RenderUI()
 	if hasMoreSeeds or canScrollUp then
 		if uiScrollOffset == 0 then
 			-- At top - can only scroll down
-			footer = footer .. "Down: More | "
+			footer = footer .. "Down | "
 		elseif not hasMoreSeeds then
 			-- At bottom - can only scroll up
-			footer = footer .. "Up: More | "
+			footer = footer .. "Up | "
 		else
 			-- In middle - can scroll both ways
-			footer = footer .. "Arrows: Scroll | "
+			footer = footer .. "Arrows | "
 		end
 	end
 
@@ -1138,15 +1138,16 @@ function seedMod:OnUpdate()
 		lastUpKeyState = upPressed
 		lastDownKeyState = downPressed
 
-		-- Check for F key press to toggle favorite for the top visible seed
-		local fPressed = Input.IsButtonPressed(Keyboard.KEY_F, 0)
+		-- Check for F3 key press to toggle favorite for the top visible seed
+		-- F3 chosen to avoid conflict with F (fullscreen) and complement F2 (UI toggle)
+		local f3Pressed = Input.IsButtonPressed(Keyboard.KEY_F3, 0)
 
-		if fPressed and not lastFavoriteKeyState then
+		if f3Pressed and not lastFavoriteKeyState then
 			-- Toggle favorite for the top visible seed (the one at scroll offset)
 			seedMod:ToggleFavorite(uiScrollOffset + 1)
 		end
 
-		lastFavoriteKeyState = fPressed
+		lastFavoriteKeyState = f3Pressed
 	end
 end
 
