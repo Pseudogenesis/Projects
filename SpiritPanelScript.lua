@@ -11,6 +11,7 @@ local EMOTIONS = {"Ire", "Joy", "Calm", "Sorrow"}
 local seasonWheel = nil
 local activated = false
 local playerColor = nil
+local busy = false  -- Prevents rapid clicking
 
 -----------------------------------------
 -- Forward declarations for local functions
@@ -212,6 +213,10 @@ end
 -----------------------------------------
 
 function changeSeason(obj, player_color, alt_click)
+    -- Prevent rapid clicking while cards are moving
+    if busy then return end
+    busy = true
+
     local color = Global.call("getSpiritColor", {name = spiritName})
     local reverse = alt_click -- true for right-click (go backwards)
 
@@ -224,37 +229,48 @@ function changeSeason(obj, player_color, alt_click)
         -- debug = true
     })
 
+    -- First, find the innate card in the hits
+    local innateCard = nil
     for _, hit in pairs(hits) do
         local card = hit.hit_object
         if card and card.hasTag("Innate") then
-            local targetPos = card.getPosition()
-            local targetRot = card.getRotation()
-
-            -- Calculate the NEXT emotion index based on current card
-            local nextIndex = getNextEmotionIndex(card, reverse)
-            local wantTag = EMOTIONS[nextIndex]
-
-            -- Move the current card to hand 3
-            card.deal(1, color, 3)
-
-            -- Pull the next emotion card from hand 3 back to the panel
-            local replacement = findInnateWithTagInHand(color, 3, wantTag)
-            if replacement then
-                replacement.setPosition(targetPos, false)
-                replacement.setRotation(targetRot, false)
-            end
-
-            -- Set the wheel directly to the NEW emotion state
-            setWheelToEmotion(wantTag)
-
-            break -- only process one innate card
-        else
-            local replacement = findInnateWithTagInHand(color, 3, "Ire")
-            if replacement then
-                replacement.setPosition(pos + Vector(13,0.5,-10), false)
-            end
+            innateCard = card
+            break
         end
     end
+
+    if innateCard then
+        local targetPos = innateCard.getPosition()
+        local targetRot = innateCard.getRotation()
+
+        -- Calculate the NEXT emotion index based on current card
+        local nextIndex = getNextEmotionIndex(innateCard, reverse)
+        local wantTag = EMOTIONS[nextIndex]
+
+        -- Move the current card to hand 3
+        innateCard.deal(1, color, 3)
+
+        -- Pull the next emotion card from hand 3 back to the panel
+        local replacement = findInnateWithTagInHand(color, 3, wantTag)
+        if replacement then
+            replacement.setPosition(targetPos, false)
+            replacement.setRotation(targetRot, false)
+        end
+
+        -- Set the wheel directly to the NEW emotion state
+        setWheelToEmotion(wantTag)
+    else
+        -- No innate on panel, place the default (Ire)
+        local replacement = findInnateWithTagInHand(color, 3, "Ire")
+        if replacement then
+            replacement.setPosition(pos + Vector(13,0.5,-10), false)
+        end
+    end
+
+    -- Release busy flag after cards have time to move
+    Wait.frames(function()
+        busy = false
+    end, 20)
 end
 
 -----------------------------------------
@@ -272,35 +288,41 @@ function timePasses()
         -- debug = true
     })
 
+    -- First, find the innate card in the hits
+    local innateCard = nil
     for _, hit in pairs(hits) do
         local card = hit.hit_object
         if card and card.hasTag("Innate") then
-            local targetPos = card.getPosition()
-            local targetRot = card.getRotation()
+            innateCard = card
+            break
+        end
+    end
 
-            -- Calculate the NEXT emotion index (always forward for timePasses)
-            local nextIndex = getNextEmotionIndex(card, false)
-            local wantTag = EMOTIONS[nextIndex]
+    if innateCard then
+        local targetPos = innateCard.getPosition()
+        local targetRot = innateCard.getRotation()
 
-            -- Move the current card to hand 3
-            card.deal(1, color, 3)
+        -- Calculate the NEXT emotion index (always forward for timePasses)
+        local nextIndex = getNextEmotionIndex(innateCard, false)
+        local wantTag = EMOTIONS[nextIndex]
 
-            -- Pull the next emotion card from hand 3 back to the panel
-            local replacement = findInnateWithTagInHand(color, 3, wantTag)
-            if replacement then
-                replacement.setPosition(targetPos, false)
-                replacement.setRotation(targetRot, false)
-            end
+        -- Move the current card to hand 3
+        innateCard.deal(1, color, 3)
 
-            -- Set the wheel directly to the NEW emotion state
-            setWheelToEmotion(wantTag)
+        -- Pull the next emotion card from hand 3 back to the panel
+        local replacement = findInnateWithTagInHand(color, 3, wantTag)
+        if replacement then
+            replacement.setPosition(targetPos, false)
+            replacement.setRotation(targetRot, false)
+        end
 
-            break -- only process one innate card
-        else
-            local replacement = findInnateWithTagInHand(color, 3, "Ire")
-            if replacement then
-                replacement.setPosition(pos + Vector(13,0.5,-10), false)
-            end
+        -- Set the wheel directly to the NEW emotion state
+        setWheelToEmotion(wantTag)
+    else
+        -- No innate on panel, place the default (Ire)
+        local replacement = findInnateWithTagInHand(color, 3, "Ire")
+        if replacement then
+            replacement.setPosition(pos + Vector(13,0.5,-10), false)
         end
     end
 end
