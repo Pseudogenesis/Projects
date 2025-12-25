@@ -5,75 +5,69 @@ local pos
 local EMOTIONS = {"Sorrow", "Ire", "Joy", "Calm"}
 local seasonWheel = nil
 local activated = false
+local playerColor = nil
 
+-----------------------------------------
+-- Forward declarations for local functions
+-----------------------------------------
+local getWheelEmotion
+local setWheelToEmotion
+local findInnateWithTagInHand
+local getEmotionIndex
+local getNextEmotionTag
+local cycleSeasonWheel
 
-function doSetup(params)
-    local color = params.color
-    local panel = params.spiritPanel
-    self.locked = true
-    local position = panel.getPosition() + Vector(-8.2,-0.22,6.8)
-    pos = position
-    self.setPosition(position)
+-----------------------------------------
+-- Local function implementations
+-----------------------------------------
 
-    -- Find the Season Wheel object by searching for it on the table
-    for _, obj in ipairs(getAllObjects()) do
-        if obj.getName():find("Season Wheel") then
-            seasonWheel = obj
+getWheelEmotion = function()
+    if not seasonWheel then return "Sorrow" end
+    local stateId = seasonWheel.getStateId()
+    if stateId == -1 then stateId = 1 end
+    -- States: 1=Sorrow, 2=Ire, 3=Joy, 4=Calm
+    return EMOTIONS[stateId] or "Sorrow"
+end
+
+setWheelToEmotion = function(emotionTag)
+    if not seasonWheel then return end
+
+    -- Find which state index matches this emotion
+    local targetState = 1
+    for i, emotion in ipairs(EMOTIONS) do
+        if emotion == emotionTag then
+            targetState = i
             break
         end
     end
 
-    -- Spawn the new hand (hand index 3)
-    local handPosition = Player[color].getHandTransform(2).position
-    handPosition.z = handPosition.z - 5.5
-    Global.call("SpawnHand", {color = color, position = handPosition})
+    local currentState = seasonWheel.getStateId()
+    if currentState == -1 then currentState = 1 end
 
-    local hand = Player[color].getHandObjects(1)
-    Wait.frames(function()
-        if hand ~= {} then
-            for _,card in pairs(hand) do
-                if card.hasTag("Innate") then
-                    card.deal(1, color, 3)
-                end
-            end
+    -- Only change if different
+    if targetState ~= currentState then
+        seasonWheel = seasonWheel.setState(targetState)
+    end
+end
+
+findInnateWithTagInHand = function(color, handIndex, tagName)
+    local hand = Player[color].getHandObjects(handIndex)
+    for _, obj in ipairs(hand) do
+        if obj.hasTag("Innate") and obj.hasTag(tagName) then
+            return obj
         end
-    end, 1)
-
-    createPanelButtons(panel)
-
-    return true
+    end
+    return nil
 end
 
------------------------------------------
--- buttons and functions for spirit panel
------------------------------------------
-
-function createPanelButtons(panel)
-    panel.createButton({
-        click_function = "changeSeason",
-        function_owner = self,
-        label = "Change Season",
-        position = {-0.93,0.5,0},
-        scale = {x=0.08, y=0.08, z=0.08},
-        width = 5000,
-        height = 750,
-        font_size = 750,
-        color = {1,1,1},
-        font_color = {0,0,0},
-        tooltip = "Left-click: Next Season | Right-click: Previous Season",
-    })
-
-
-end
-
-local function getEmotionIndex(card)
+getEmotionIndex = function(card)
     for i, tag in ipairs(EMOTIONS) do
         if card.hasTag(tag) then return i end
     end
     return 1 -- default to Sorrow if none
 end
 
-local function getNextEmotionTag(card, reverse)
+getNextEmotionTag = function(card, reverse)
     local i = getEmotionIndex(card)
     if reverse then
         -- Go backwards: 1->4, 2->1, 3->2, 4->3
@@ -84,7 +78,7 @@ local function getNextEmotionTag(card, reverse)
     end
 end
 
-local function cycleSeasonWheel(reverse)
+cycleSeasonWheel = function(reverse)
     if not seasonWheel then return end
 
     local currentState = seasonWheel.getStateId()
@@ -110,15 +104,93 @@ local function cycleSeasonWheel(reverse)
     end
 end
 
-local function findInnateWithTagInHand(color, handIndex, tagName)
-    local hand = Player[color].getHandObjects(handIndex)
-    for _, obj in ipairs(hand) do
-        if obj.hasTag("Innate") and obj.hasTag(tagName) then
-            return obj
+-----------------------------------------
+-- Place the Innate card matching the wheel's current state
+-----------------------------------------
+function placeCardMatchingWheel(panel)
+    if not playerColor then return end
+
+    local targetEmotion = getWheelEmotion()
+    local replacement = findInnateWithTagInHand(playerColor, 3, targetEmotion)
+
+    if replacement then
+        -- Position on the panel (same offset as used in changeSeason)
+        local targetPos = pos + Vector(13, 0.5, -10)
+        replacement.setPosition(targetPos, false)
+    end
+end
+
+-----------------------------------------
+-- Setup function
+-----------------------------------------
+
+function doSetup(params)
+    local color = params.color
+    playerColor = color
+    local panel = params.spiritPanel
+    self.locked = true
+    local position = panel.getPosition() + Vector(-8.2,-0.22,6.8)
+    pos = position
+    self.setPosition(position)
+
+    -- Find the Season Wheel object by searching for it on the table
+    for _, obj in ipairs(getAllObjects()) do
+        if obj.getName():find("Season Wheel") then
+            seasonWheel = obj
+            break
         end
     end
-    return nil
+
+    -- Spawn the new hand (hand index 3)
+    local handPosition = Player[color].getHandTransform(2).position
+    handPosition.z = handPosition.z - 5.5
+    Global.call("SpawnHand", {color = color, position = handPosition})
+
+    -- Move ALL Innate cards to hand 3 first
+    local hand = Player[color].getHandObjects(1)
+    Wait.frames(function()
+        if hand ~= {} then
+            for _,card in pairs(hand) do
+                if card.hasTag("Innate") then
+                    card.deal(1, color, 3)
+                end
+            end
+        end
+
+        -- After cards are dealt to hand 3, place the correct one on the panel
+        Wait.frames(function()
+            placeCardMatchingWheel(panel)
+        end, 5)
+    end, 1)
+
+    createPanelButtons(panel)
+
+    return true
 end
+
+-----------------------------------------
+-- Panel button creation
+-----------------------------------------
+
+function createPanelButtons(panel)
+    panel.createButton({
+        click_function = "changeSeason",
+        function_owner = self,
+        label = "Change Season",
+        position = {-0.93,0.5,0},
+        scale = {x=0.08, y=0.08, z=0.08},
+        width = 5000,
+        height = 750,
+        font_size = 750,
+        color = {1,1,1},
+        font_color = {0,0,0},
+        tooltip = "Left-click: Next Season | Right-click: Previous Season",
+    })
+end
+
+-----------------------------------------
+-- Change Season (button click handler)
+-----------------------------------------
 
 function changeSeason(obj, player_color, alt_click)
     -- Hide this script object after first activation
@@ -145,6 +217,18 @@ function changeSeason(obj, player_color, alt_click)
             local targetPos = card.getPosition()
             local targetRot = card.getRotation()
 
+            -- SYNC: First, ensure the wheel matches the current card
+            local currentEmotion = nil
+            for _, emotion in ipairs(EMOTIONS) do
+                if card.hasTag(emotion) then
+                    currentEmotion = emotion
+                    break
+                end
+            end
+            if currentEmotion then
+                setWheelToEmotion(currentEmotion)
+            end
+
             local wantTag = getNextEmotionTag(card, reverse)
 
             -- Move the current one to hand 3
@@ -157,7 +241,7 @@ function changeSeason(obj, player_color, alt_click)
                 replacement.setRotation(targetRot, false)
             end
 
-            -- Cycle the Season Wheel to match
+            -- Cycle the Season Wheel to match the NEW card
             cycleSeasonWheel(reverse)
 
             break -- only process one innate card
@@ -170,10 +254,14 @@ function changeSeason(obj, player_color, alt_click)
     end
 end
 
+-----------------------------------------
+-- Time Passes handler
+-----------------------------------------
+
 function timePasses()
     local color = Global.call("getSpiritColor", {name = spiritName})
     local hits = Physics.cast({
-        origin = obj.getPosition() + Vector(5,0,-5),
+        origin = self.getPosition() + Vector(5,0,-5),
         direction = Vector(0,1,0),
         type = 3,
         size = {6,1,6.5},
@@ -186,6 +274,18 @@ function timePasses()
         if card and card.hasTag("Innate") then
             local targetPos = card.getPosition()
             local targetRot = card.getRotation()
+
+            -- SYNC: First, ensure the wheel matches the current card
+            local currentEmotion = nil
+            for _, emotion in ipairs(EMOTIONS) do
+                if card.hasTag(emotion) then
+                    currentEmotion = emotion
+                    break
+                end
+            end
+            if currentEmotion then
+                setWheelToEmotion(currentEmotion)
+            end
 
             local wantTag = getNextEmotionTag(card, false)
 
@@ -211,6 +311,10 @@ function timePasses()
         end
     end
 end
+
+-----------------------------------------
+-- Cost modification
+-----------------------------------------
 
 function modifyCost(params)
     local costs = params.costs
