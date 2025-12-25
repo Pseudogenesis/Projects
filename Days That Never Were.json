@@ -1,0 +1,78 @@
+{
+  "SaveName": "",
+  "Date": "",
+  "VersionNumber": "",
+  "GameMode": "",
+  "GameType": "",
+  "GameComplexity": "",
+  "Tags": [],
+  "Gravity": 0.5,
+  "PlayArea": 0.5,
+  "Table": "",
+  "Sky": "",
+  "Note": "",
+  "TabStates": {},
+  "LuaScript": "",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "ObjectStates": [
+    {
+      "GUID": "fddf31",
+      "Name": "Custom_Model",
+      "Transform": {
+        "posX": 49.0249443,
+        "posY": 0.9600002,
+        "posZ": 64.2513351,
+        "rotX": 359.9784,
+        "rotY": 269.994049,
+        "rotZ": 0.005300196,
+        "scaleX": 10.0,
+        "scaleY": 10.0,
+        "scaleZ": 10.0
+      },
+      "Nickname": "Days That Never Were",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "Tags": [
+        "Setup"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": false,
+      "Grid": false,
+      "Snap": false,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "CustomMesh": {
+        "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1754683441115249154/B284A821AE46B04E3399AE51B6B94ED0BEFC5F92/",
+        "DiffuseURL": "",
+        "NormalURL": "",
+        "ColliderURL": "",
+        "Convex": true,
+        "MaterialIndex": 0,
+        "TypeIndex": 0,
+        "CastShadows": true
+      },
+      "LuaScript": "spiritName = \"Fractured Days Split the Sky\"\n\nfunction doSetup(params)\n    local color = params.color\n    local position = Player[color].getHandTransform(2).position\n    position.z = position.z - 5.5\n    Global.call(\"SpawnHand\", {color = color, position = position})\n\n    Wait.frames(function()\n        local count\n        if Global.getVar(\"SetupChecker\").getVar(\"exploratoryFractured\") then\n            count = 7 - Global.getVar(\"numPlayers\")\n            if count < 1 then\n                count = 1\n            end\n        elseif Global.getVar(\"numPlayers\") <= 2 then\n            count = 6\n        else\n            count = 4\n        end\n        if Global.getVar(\"numBoards\") == 1 then\n            Player[color].broadcast(\"Don't forget to gain 1 Time\", \"Blue\")\n        end\n\n        local playtestCount = Global.call(\"getPlaytestCount\", {count = count, major = false})\n        local minorPowerDeck = getObjectFromGUID(Global.getVar(\"minorPowerZone\")).getObjects()[1]\n        minorPowerDeck.deal(count - playtestCount, color, 3)\n        if playtestCount > 0 then\n            minorPowerDeck = getObjectFromGUID(Global.getVar(\"playtestMinorPowerZone\")).getObjects()[1]\n            minorPowerDeck.deal(playtestCount, color, 3)\n        end\n\n        playtestCount = Global.call(\"getPlaytestCount\", {count = count, major = true})\n        local majorPowerDeck = getObjectFromGUID(Global.getVar(\"majorPowerZone\")).getObjects()[1]\n        majorPowerDeck.deal(count - playtestCount, color, 3)\n        if playtestCount > 0 then\n            majorPowerDeck = getObjectFromGUID(Global.getVar(\"playtestMajorPowerZone\")).getObjects()[1]\n            majorPowerDeck.deal(playtestCount, color, 3)\n        end\n\n        self.destruct()\n    end, 1)\n    return true\nend",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    }
+  ]
+}
