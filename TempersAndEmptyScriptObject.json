@@ -1,0 +1,219 @@
+{
+  "SaveName": "",
+  "Date": "",
+  "VersionNumber": "",
+  "GameMode": "",
+  "GameType": "",
+  "GameComplexity": "",
+  "Tags": [],
+  "Gravity": 0.5,
+  "PlayArea": 0.5,
+  "Table": "",
+  "Sky": "",
+  "Note": "",
+  "TabStates": {},
+  "LuaScript": "",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "ObjectStates": [
+    {
+      "GUID": "Tempers_of_the_Ever-Changing_Skies",
+      "Name": "Custom_Tile",
+      "Transform": {
+        "posX": -45.6196632,
+        "posY": 0.883320868,
+        "posZ": 106.140053,
+        "rotX": -7.73711E-06,
+        "rotY": 179.99762,
+        "rotZ": 0.5609969,
+        "scaleX": 5.46,
+        "scaleY": 1.0,
+        "scaleZ": 5.46
+      },
+      "Nickname": "Tempers of the Ever-Changing Skies",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.2002995,
+        "g": 0.16029951,
+        "b": 0.15179953
+      },
+      "Tags": [
+        "Spirit"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": false,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "CustomImage": {
+        "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/9970943713431201118/CBFAD90471C248223D5B9C740A9DC7F6CA73EDE7/",
+        "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/9970943713431201118/CBFAD90471C248223D5B9C740A9DC7F6CA73EDE7/",
+        "ImageScalar": 1.0,
+        "WidthScale": 0.0,
+        "CustomTile": {
+          "Type": 0,
+          "Thickness": 0.2,
+          "Stackable": false,
+          "Stretch": true
+        }
+      },
+      "LuaScript": "-- Spirit Panel for MJ & iakona's Spirit Island Mod --\nuseProgression = false\nuseAspect = 2\n\nfunction onLoad(saved_data)\n    Color.Add(\"SoftBlue\", Color.new(0.53,0.92,1))\n    Color.Add(\"SoftYellow\", Color.new(1,0.8,0.5))\n    getObjectFromGUID(\"SourceSpirit\").call(\"load\", {obj = self, saved_data = saved_data})\nend",
+      "LuaScriptState": "{\"bonusEnergy\":[],\"thresholds\":[{\"elements\":\"02020000\",\"position\":{\"x\":0.34,\"y\":0,\"z\":0.45}}],\"trackElements\":[{\"elements\":\"01000000\",\"position\":{\"x\":-0.503,\"y\":0,\"z\":-0.4427}}],\"trackEnergy\":[{\"count\":3,\"position\":{\"x\":-0.9584,\"y\":0,\"z\":-0.4427}},{\"count\":2,\"position\":{\"x\":-0.2753,\"y\":0,\"z\":-0.4427}},{\"count\":1,\"position\":{\"x\":0.1801,\"y\":0,\"z\":-0.4427}}]}",
+      "XmlUI": "",
+      "AttachedSnapPoints": [
+        {
+          "Position": {
+            "x": -0.0476,
+            "y": 0.2,
+            "z": -0.4427
+          }
+        },
+        {
+          "Position": {
+            "x": -0.2753,
+            "y": 0.2,
+            "z": -0.4427
+          }
+        },
+        {
+          "Position": {
+            "x": -0.503,
+            "y": 0.2,
+            "z": -0.4427
+          }
+        },
+        {
+          "Position": {
+            "x": -0.7307,
+            "y": 0.2,
+            "z": -0.4427
+          }
+        },
+        {
+          "Position": {
+            "x": -0.9584,
+            "y": 0.2,
+            "z": -0.4427
+          }
+        },
+        {
+          "Position": {
+            "x": -0.0476,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        },
+        {
+          "Position": {
+            "x": -0.2753,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        },
+        {
+          "Position": {
+            "x": -0.503,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        },
+        {
+          "Position": {
+            "x": -0.7307,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        },
+        {
+          "Position": {
+            "x": -0.9584,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        },
+        {
+          "Position": {
+            "x": -1.1861,
+            "y": 0.2,
+            "z": -0.0743
+          }
+        }
+      ],
+      "ChildObjects": [
+        {
+          "GUID": "fddf31",
+          "Name": "Custom_Model",
+          "Transform": {
+            "posX": 1.49495757,
+            "posY": 0.208998352,
+            "posZ": 0.9934842,
+            "rotX": 0.5868266,
+            "rotY": 85.65325,
+            "rotZ": 2.40188527,
+            "scaleX": 1.83413279,
+            "scaleY": 9.917682,
+            "scaleZ": 1.83165872
+          },
+          "Nickname": "Change Season Script",
+          "Description": "",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0
+          },
+          "Tags": [
+            "Setup"
+          ],
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": false,
+          "Snap": false,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": false,
+          "CustomMesh": {
+            "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1754683441115249154/B284A821AE46B04E3399AE51B6B94ED0BEFC5F92/",
+            "DiffuseURL": "",
+            "NormalURL": "",
+            "ColliderURL": "",
+            "Convex": true,
+            "MaterialIndex": 0,
+            "TypeIndex": 0,
+            "CastShadows": true
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        }
+      ]
+    }
+  ]
+}
