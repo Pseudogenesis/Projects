@@ -4,7 +4,7 @@ useProgression = false
 useAspect = 2
 
 local SCAVENGE_TAGS = {"Beasts", "Badlands", "Wilds", "Disease"}
-local scavengerPanel = nil  -- Reference to this panel
+local menuAddedTo = {}  -- Track GUIDs we've already added menus to
 
 -----------------------------------------
 -- Helper functions
@@ -22,23 +22,29 @@ local function isScavengeTarget(obj)
 end
 
 -- Add context menu to a token
-local function addScavengeMenu(obj)
-    if not isScavengeTarget(obj) then return end
+local function addScavengeMenu(obj, panel)
+    if not obj or not isScavengeTarget(obj) then return end
 
+    -- Prevent duplicates by tracking GUIDs
+    local guid = obj.getGUID()
+    if menuAddedTo[guid] then return end
+    menuAddedTo[guid] = true
+
+    -- Capture panel reference in closure
     obj.addContextMenuItem("Scavenge Token", function(playerColor)
-        if scavengerPanel then
+        if panel and panel.getPosition then
             -- Convert local position to world position
             -- Upper left area of the panel (in local coords)
-            local targetPos = scavengerPanel.positionToWorld({-0.8, 0.3, 0.7})
+            local targetPos = panel.positionToWorld({-0.8, 0.3, 0.7})
             obj.setPositionSmooth(targetPos, false, false)
         end
     end, false)  -- false = don't keep menu open after clicking
 end
 
 -- Add context menu to all existing valid tokens
-local function setupScavengeMenus()
+local function setupScavengeMenus(panel)
     for _, obj in ipairs(getAllObjects()) do
-        addScavengeMenu(obj)
+        addScavengeMenu(obj, panel)
     end
 end
 
@@ -51,10 +57,11 @@ function onLoad(saved_data)
     Color.Add("SoftYellow", Color.new(1,0.8,0.5))
     getObjectFromGUID("SourceSpirit").call("load", {obj = self, saved_data = saved_data})
 
-    scavengerPanel = self
-
-    -- Setup menus after a short delay to ensure all objects are loaded
-    Wait.frames(setupScavengeMenus, 60)
+    -- Setup menus after a delay, passing self as the panel reference
+    local panel = self
+    Wait.frames(function()
+        setupScavengeMenus(panel)
+    end, 60)
 end
 
 -----------------------------------------
@@ -62,18 +69,23 @@ end
 -----------------------------------------
 
 function doSetup(params)
-    -- Re-run menu setup after spirit is picked, in case tokens spawned during setup
-    Wait.frames(setupScavengeMenus, 30)
+    -- Re-run menu setup after spirit is picked
+    local panel = self
+    Wait.frames(function()
+        setupScavengeMenus(panel)
+    end, 30)
     return true
 end
 
 -----------------------------------------
--- Handle newly spawned objects (Global event)
+-- Handle newly spawned objects
 -----------------------------------------
 
 function onObjectSpawn(obj)
-    -- Small delay to ensure object is fully initialized
+    local panel = self
     Wait.frames(function()
-        addScavengeMenu(obj)
+        if obj then
+            addScavengeMenu(obj, panel)
+        end
     end, 10)
 end
