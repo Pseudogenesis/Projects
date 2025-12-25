@@ -1,5 +1,6 @@
 -- Season Change Script for Tempers of the Ever-Changing Skies --
 -- Runs from invisible attached child object --
+-- Self-initializes via onLoad since mod doesn't call doSetup on child objects --
 
 local spiritName = "Tempers of the Ever-Changing Skies"
 local impendTable = {}
@@ -10,6 +11,7 @@ local seasonWheel = nil
 local playerColor = nil
 local busy = false  -- Prevents rapid clicking
 local spiritPanel = nil  -- Reference to parent panel
+local initialized = false  -- Prevent double initialization
 
 -----------------------------------------
 -- Forward declarations for local functions
@@ -20,7 +22,6 @@ local findInnateWithTagInHand
 local findInnateWithTagInHandObjects
 local getEmotionIndex
 local getNextEmotionIndex
-local cycleSeasonWheel
 
 -----------------------------------------
 -- Local function implementations
@@ -30,14 +31,12 @@ getWheelEmotion = function()
     if not seasonWheel then return "Ire" end
     local stateId = seasonWheel.getStateId()
     if stateId == -1 then stateId = 1 end
-    -- States: 1=Ire, 2=Joy, 3=Calm, 4=Sorrow
     return EMOTIONS[stateId] or "Ire"
 end
 
 setWheelToEmotion = function(emotionTag)
     if not seasonWheel then return end
 
-    -- Find which state index matches this emotion
     local targetState = 1
     for i, emotion in ipairs(EMOTIONS) do
         if emotion == emotionTag then
@@ -49,7 +48,6 @@ setWheelToEmotion = function(emotionTag)
     local currentState = seasonWheel.getStateId()
     if currentState == -1 then currentState = 1 end
 
-    -- Only change if different
     if targetState ~= currentState then
         seasonWheel = seasonWheel.setState(targetState)
     end
@@ -65,7 +63,6 @@ findInnateWithTagInHand = function(color, handIndex, tagName)
     return nil
 end
 
--- Version that searches a provided hand objects table
 findInnateWithTagInHandObjects = function(handObjects, tagName)
     for _, obj in ipairs(handObjects) do
         if obj.hasTag("Innate") and obj.hasTag(tagName) then
@@ -79,62 +76,40 @@ getEmotionIndex = function(card)
     for i, tag in ipairs(EMOTIONS) do
         if card.hasTag(tag) then return i end
     end
-    return 1 -- default to Ire if none
+    return 1
 end
 
--- Get the next emotion index (not tag) given a card
 getNextEmotionIndex = function(card, reverse)
     local i = getEmotionIndex(card)
     if reverse then
-        -- Go backwards: 1->4, 2->1, 3->2, 4->3
         return ((i - 2) % #EMOTIONS) + 1
     else
-        -- Go forwards: 1->2, 2->3, 3->4, 4->1
         return (i % #EMOTIONS) + 1
     end
 end
 
-cycleSeasonWheel = function(reverse)
-    if not seasonWheel then return end
-
-    local currentState = seasonWheel.getStateId()
-    if currentState == -1 then return end -- No states
-
-    -- getStates() returns all states EXCEPT the current one, so total = #getStates + 1
-    local states = seasonWheel.getStates()
-    if not states then return end
-    local numStates = #states + 1
-
-    local nextState
-    if reverse then
-        -- Go backwards: 1->4, 2->1, 3->2, 4->3
-        nextState = ((currentState - 2) % numStates) + 1
-    else
-        -- Go forwards: 1->2, 2->3, 3->4, 4->1
-        nextState = (currentState % numStates) + 1
-    end
-
-    -- setState returns new object reference; update our reference
-    if nextState ~= currentState then
-        seasonWheel = seasonWheel.setState(nextState)
-    end
-end
-
 -----------------------------------------
--- Setup function (called by mod framework)
+-- Initialization
 -----------------------------------------
 
-function doSetup(params)
-    local color = params.color
+local function runSetup()
+    if initialized then return end
+
+    -- Get player color from Global
+    local color = Global.call("getSpiritColor", {name = spiritName})
+    if not color then return end  -- Spirit not set up yet
+
+    initialized = true
     playerColor = color
 
     -- Get the parent spirit panel
-    spiritPanel = params.spiritPanel or self.getParent()
+    spiritPanel = self.getParent()
+    if not spiritPanel then return end
 
     local position = spiritPanel.getPosition() + Vector(-8.2,-0.22,6.8)
     pos = position
 
-    -- Find the Season Wheel object by searching for it on the table
+    -- Find the Season Wheel
     for _, obj in ipairs(getAllObjects()) do
         if obj.getName():find("Season Wheel") then
             seasonWheel = obj
@@ -147,24 +122,21 @@ function doSetup(params)
     handPosition.z = handPosition.z - 5.5
     Global.call("SpawnHand", {color = color, position = handPosition})
 
-    -- Determine which emotion the wheel is currently showing
+    -- Determine starting emotion from wheel
     local startingEmotion = getWheelEmotion()
 
-    -- Get current hand and process Innate cards
+    -- Process Innate cards
     local hand = Player[color].getHandObjects(1)
     Wait.frames(function()
         if hand ~= {} then
-            -- Find the card that matches the wheel's starting emotion
             local startingCard = findInnateWithTagInHandObjects(hand, startingEmotion)
 
             for _,card in pairs(hand) do
                 if card.hasTag("Innate") then
                     if card == startingCard then
-                        -- Place matching card directly on the panel
                         local targetPos = pos + Vector(13, 0.5, -10)
                         card.setPosition(targetPos, false)
                     else
-                        -- Send other innates to hand 3
                         card.deal(1, color, 3)
                     end
                 end
@@ -172,9 +144,27 @@ function doSetup(params)
         end
     end, 1)
 
+    -- Create the button on the panel
     createPanelButtons(spiritPanel)
+end
 
-    return true
+-- Poll for setup completion
+local function waitForSetup()
+    if initialized then return end
+
+    -- Check if spirit is set up by trying to get the color
+    local color = Global.call("getSpiritColor", {name = spiritName})
+    if color then
+        runSetup()
+    else
+        -- Keep polling every second
+        Wait.time(waitForSetup, 1)
+    end
+end
+
+function onLoad(saved_data)
+    -- Start polling for when spirit is set up
+    Wait.time(waitForSetup, 2)
 end
 
 -----------------------------------------
@@ -184,7 +174,7 @@ end
 function createPanelButtons(panel)
     panel.createButton({
         click_function = "changeSeason",
-        function_owner = self,  -- Callback comes to this script object
+        function_owner = self,
         label = "Change Season",
         position = {-0.93,0.5,0},
         scale = {x=0.08, y=0.08, z=0.08},
@@ -202,12 +192,11 @@ end
 -----------------------------------------
 
 function changeSeason(obj, player_color, alt_click)
-    -- Prevent rapid clicking while cards are moving
     if busy then return end
     busy = true
 
     local color = Global.call("getSpiritColor", {name = spiritName})
-    local reverse = alt_click -- true for right-click (go backwards)
+    local reverse = alt_click
 
     local hits = Physics.cast({
         origin = obj.getPosition() + Vector(5,0,-5),
@@ -215,10 +204,8 @@ function changeSeason(obj, player_color, alt_click)
         type = 3,
         size = {6,1,6.5},
         max_distance = 1,
-        -- debug = true
     })
 
-    -- First, find the innate card in the hits
     local innateCard = nil
     for _, hit in pairs(hits) do
         local card = hit.hit_object
@@ -232,41 +219,37 @@ function changeSeason(obj, player_color, alt_click)
         local targetPos = innateCard.getPosition()
         local targetRot = innateCard.getRotation()
 
-        -- Calculate the NEXT emotion index based on current card
         local nextIndex = getNextEmotionIndex(innateCard, reverse)
         local wantTag = EMOTIONS[nextIndex]
 
-        -- Move the current card to hand 3
         innateCard.deal(1, color, 3)
 
-        -- Pull the next emotion card from hand 3 back to the panel
         local replacement = findInnateWithTagInHand(color, 3, wantTag)
         if replacement then
             replacement.setPosition(targetPos, false)
             replacement.setRotation(targetRot, false)
         end
 
-        -- Set the wheel directly to the NEW emotion state
         setWheelToEmotion(wantTag)
     else
-        -- No innate on panel, place the default (Ire)
         local replacement = findInnateWithTagInHand(color, 3, "Ire")
         if replacement then
             replacement.setPosition(pos + Vector(13,0.5,-10), false)
         end
     end
 
-    -- Release busy flag after cards have time to move
     Wait.frames(function()
         busy = false
     end, 20)
 end
 
 -----------------------------------------
--- Time Passes handler (called by mod framework)
+-- Time Passes handler
 -----------------------------------------
 
 function timePasses()
+    if not spiritPanel then return end
+
     local color = Global.call("getSpiritColor", {name = spiritName})
     local hits = Physics.cast({
         origin = spiritPanel.getPosition() + Vector(5,0,-5),
@@ -274,10 +257,8 @@ function timePasses()
         type = 3,
         size = {6,1,6.5},
         max_distance = 1,
-        -- debug = true
     })
 
-    -- First, find the innate card in the hits
     local innateCard = nil
     for _, hit in pairs(hits) do
         local card = hit.hit_object
@@ -291,24 +272,19 @@ function timePasses()
         local targetPos = innateCard.getPosition()
         local targetRot = innateCard.getRotation()
 
-        -- Calculate the NEXT emotion index (always forward for timePasses)
         local nextIndex = getNextEmotionIndex(innateCard, false)
         local wantTag = EMOTIONS[nextIndex]
 
-        -- Move the current card to hand 3
         innateCard.deal(1, color, 3)
 
-        -- Pull the next emotion card from hand 3 back to the panel
         local replacement = findInnateWithTagInHand(color, 3, wantTag)
         if replacement then
             replacement.setPosition(targetPos, false)
             replacement.setRotation(targetRot, false)
         end
 
-        -- Set the wheel directly to the NEW emotion state
         setWheelToEmotion(wantTag)
     else
-        -- No innate on panel, place the default (Ire)
         local replacement = findInnateWithTagInHand(color, 3, "Ire")
         if replacement then
             replacement.setPosition(pos + Vector(13,0.5,-10), false)
@@ -317,7 +293,7 @@ function timePasses()
 end
 
 -----------------------------------------
--- Cost modification (called by mod framework)
+-- Cost modification
 -----------------------------------------
 
 function modifyCost(params)
