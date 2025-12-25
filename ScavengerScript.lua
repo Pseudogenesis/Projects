@@ -57,7 +57,20 @@ function onLoad(saved_data)
     Wait.frames(setupScavengeMenus, 60)
 end
 
--- Handle newly spawned objects
+-----------------------------------------
+-- Setup function (called by mod framework when spirit is picked)
+-----------------------------------------
+
+function doSetup(params)
+    -- Re-run menu setup after spirit is picked, in case tokens spawned during setup
+    Wait.frames(setupScavengeMenus, 30)
+    return true
+end
+
+-----------------------------------------
+-- Handle newly spawned objects (Global event)
+-----------------------------------------
+
 function onObjectSpawn(obj)
     -- Small delay to ensure object is fully initialized
     Wait.frames(function()
