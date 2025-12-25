@@ -2,7 +2,8 @@ spiritName = "Tempers of the Ever-Changing Skies"
 
 local impendTable = {}
 local pos
-local EMOTIONS = {"Sorrow", "Ire", "Joy", "Calm"}
+-- Wheel states: 1=Ire, 2=Joy, 3=Calm, 4=Sorrow
+local EMOTIONS = {"Ire", "Joy", "Calm", "Sorrow"}
 local seasonWheel = nil
 local activated = false
 local playerColor = nil
@@ -13,8 +14,9 @@ local playerColor = nil
 local getWheelEmotion
 local setWheelToEmotion
 local findInnateWithTagInHand
+local findInnateWithTagInHandObjects
 local getEmotionIndex
-local getNextEmotionTag
+local getNextEmotionIndex
 local cycleSeasonWheel
 
 -----------------------------------------
@@ -22,11 +24,11 @@ local cycleSeasonWheel
 -----------------------------------------
 
 getWheelEmotion = function()
-    if not seasonWheel then return "Sorrow" end
+    if not seasonWheel then return "Ire" end
     local stateId = seasonWheel.getStateId()
     if stateId == -1 then stateId = 1 end
-    -- States: 1=Sorrow, 2=Ire, 3=Joy, 4=Calm
-    return EMOTIONS[stateId] or "Sorrow"
+    -- States: 1=Ire, 2=Joy, 3=Calm, 4=Sorrow
+    return EMOTIONS[stateId] or "Ire"
 end
 
 setWheelToEmotion = function(emotionTag)
@@ -60,21 +62,32 @@ findInnateWithTagInHand = function(color, handIndex, tagName)
     return nil
 end
 
+-- Version that searches a provided hand objects table
+findInnateWithTagInHandObjects = function(handObjects, tagName)
+    for _, obj in ipairs(handObjects) do
+        if obj.hasTag("Innate") and obj.hasTag(tagName) then
+            return obj
+        end
+    end
+    return nil
+end
+
 getEmotionIndex = function(card)
     for i, tag in ipairs(EMOTIONS) do
         if card.hasTag(tag) then return i end
     end
-    return 1 -- default to Sorrow if none
+    return 1 -- default to Ire if none
 end
 
-getNextEmotionTag = function(card, reverse)
+-- Get the next emotion index (not tag) given a card
+getNextEmotionIndex = function(card, reverse)
     local i = getEmotionIndex(card)
     if reverse then
         -- Go backwards: 1->4, 2->1, 3->2, 4->3
-        return EMOTIONS[((i - 2) % #EMOTIONS) + 1]
+        return ((i - 2) % #EMOTIONS) + 1
     else
         -- Go forwards: 1->2, 2->3, 3->4, 4->1
-        return EMOTIONS[(i % #EMOTIONS) + 1]
+        return (i % #EMOTIONS) + 1
     end
 end
 
@@ -105,22 +118,6 @@ cycleSeasonWheel = function(reverse)
 end
 
 -----------------------------------------
--- Place the Innate card matching the wheel's current state
------------------------------------------
-function placeCardMatchingWheel(panel)
-    if not playerColor then return end
-
-    local targetEmotion = getWheelEmotion()
-    local replacement = findInnateWithTagInHand(playerColor, 3, targetEmotion)
-
-    if replacement then
-        -- Position on the panel (same offset as used in changeSeason)
-        local targetPos = pos + Vector(13, 0.5, -10)
-        replacement.setPosition(targetPos, false)
-    end
-end
-
------------------------------------------
 -- Setup function
 -----------------------------------------
 
@@ -146,21 +143,29 @@ function doSetup(params)
     handPosition.z = handPosition.z - 5.5
     Global.call("SpawnHand", {color = color, position = handPosition})
 
-    -- Move ALL Innate cards to hand 3 first
+    -- Determine which emotion the wheel is currently showing
+    local startingEmotion = getWheelEmotion()
+
+    -- Get current hand and process Innate cards
     local hand = Player[color].getHandObjects(1)
     Wait.frames(function()
         if hand ~= {} then
+            -- Find the card that matches the wheel's starting emotion
+            local startingCard = findInnateWithTagInHandObjects(hand, startingEmotion)
+
             for _,card in pairs(hand) do
                 if card.hasTag("Innate") then
-                    card.deal(1, color, 3)
+                    if card == startingCard then
+                        -- Place matching card directly on the panel
+                        local targetPos = pos + Vector(13, 0.5, -10)
+                        card.setPosition(targetPos, false)
+                    else
+                        -- Send other innates to hand 3
+                        card.deal(1, color, 3)
+                    end
                 end
             end
         end
-
-        -- After cards are dealt to hand 3, place the correct one on the panel
-        Wait.frames(function()
-            placeCardMatchingWheel(panel)
-        end, 5)
     end, 1)
 
     createPanelButtons(panel)
@@ -217,36 +222,26 @@ function changeSeason(obj, player_color, alt_click)
             local targetPos = card.getPosition()
             local targetRot = card.getRotation()
 
-            -- SYNC: First, ensure the wheel matches the current card
-            local currentEmotion = nil
-            for _, emotion in ipairs(EMOTIONS) do
-                if card.hasTag(emotion) then
-                    currentEmotion = emotion
-                    break
-                end
-            end
-            if currentEmotion then
-                setWheelToEmotion(currentEmotion)
-            end
+            -- Calculate the NEXT emotion index based on current card
+            local nextIndex = getNextEmotionIndex(card, reverse)
+            local wantTag = EMOTIONS[nextIndex]
 
-            local wantTag = getNextEmotionTag(card, reverse)
-
-            -- Move the current one to hand 3
+            -- Move the current card to hand 3
             card.deal(1, color, 3)
 
-            -- After it lands in hand 3, pull the next emotion from hand 3 back to the panel
+            -- Pull the next emotion card from hand 3 back to the panel
             local replacement = findInnateWithTagInHand(color, 3, wantTag)
             if replacement then
                 replacement.setPosition(targetPos, false)
                 replacement.setRotation(targetRot, false)
             end
 
-            -- Cycle the Season Wheel to match the NEW card
-            cycleSeasonWheel(reverse)
+            -- Set the wheel directly to the NEW emotion state (not sync then cycle)
+            setWheelToEmotion(wantTag)
 
             break -- only process one innate card
         else
-            local replacement = findInnateWithTagInHand(color, 3, "Sorrow")
+            local replacement = findInnateWithTagInHand(color, 3, "Ire")
             if replacement then
                 replacement.setPosition(pos + Vector(13,0.5,-10), false)
             end
@@ -275,36 +270,26 @@ function timePasses()
             local targetPos = card.getPosition()
             local targetRot = card.getRotation()
 
-            -- SYNC: First, ensure the wheel matches the current card
-            local currentEmotion = nil
-            for _, emotion in ipairs(EMOTIONS) do
-                if card.hasTag(emotion) then
-                    currentEmotion = emotion
-                    break
-                end
-            end
-            if currentEmotion then
-                setWheelToEmotion(currentEmotion)
-            end
+            -- Calculate the NEXT emotion index (always forward for timePasses)
+            local nextIndex = getNextEmotionIndex(card, false)
+            local wantTag = EMOTIONS[nextIndex]
 
-            local wantTag = getNextEmotionTag(card, false)
-
-            -- Move the current one to hand 3
+            -- Move the current card to hand 3
             card.deal(1, color, 3)
 
-            -- After it lands in hand 3, pull the next emotion from hand 3 back to the panel
+            -- Pull the next emotion card from hand 3 back to the panel
             local replacement = findInnateWithTagInHand(color, 3, wantTag)
             if replacement then
                 replacement.setPosition(targetPos, false)
                 replacement.setRotation(targetRot, false)
             end
 
-            -- Cycle the Season Wheel to match
-            cycleSeasonWheel(false)
+            -- Set the wheel directly to the NEW emotion state
+            setWheelToEmotion(wantTag)
 
             break -- only process one innate card
         else
-            local replacement = findInnateWithTagInHand(color, 3, "Sorrow")
+            local replacement = findInnateWithTagInHand(color, 3, "Ire")
             if replacement then
                 replacement.setPosition(pos + Vector(13,0.5,-10), false)
             end
