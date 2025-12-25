@@ -1,0 +1,152 @@
+{
+  "SaveName": "",
+  "Date": "",
+  "VersionNumber": "",
+  "GameMode": "",
+  "GameType": "",
+  "GameComplexity": "",
+  "Tags": [],
+  "Gravity": 0.5,
+  "PlayArea": 0.5,
+  "Table": "",
+  "Sky": "",
+  "Note": "",
+  "TabStates": {},
+  "LuaScript": "",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "ObjectStates": [
+    {
+      "GUID": "Scavenger_of_Fates",
+      "Name": "Custom_Tile",
+      "Transform": {
+        "posX": -47.2997665,
+        "posY": 0.8934374,
+        "posZ": 92.1399841,
+        "rotX": -0.000327552523,
+        "rotY": 180.0271,
+        "rotZ": 0.6317911,
+        "scaleX": 5.46,
+        "scaleY": 1.0,
+        "scaleZ": 5.46
+      },
+      "Nickname": "Scavenger of Fates",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 0.200299859,
+        "g": 0.160299867,
+        "b": 0.151799887
+      },
+      "Tags": [
+        "Spirit"
+      ],
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": false,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "CustomImage": {
+        "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/17085709315480674271/8848AC36B15F7668BAC72872CE9EF837130228EB/",
+        "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/18344338239985522118/2743166B386F078503A4879AABB9FA34A569738B/",
+        "ImageScalar": 1.0,
+        "WidthScale": 0.0,
+        "CustomTile": {
+          "Type": 0,
+          "Thickness": 0.2,
+          "Stackable": false,
+          "Stretch": true
+        }
+      },
+      "LuaScript": "-- Spirit Panel for MJ & iakona's Spirit Island Mod --\nuseProgression = false\nuseAspect = 2\n\nfunction onLoad(saved_data)\n    Color.Add(\"SoftBlue\", Color.new(0.53,0.92,1))\n    Color.Add(\"SoftYellow\", Color.new(1,0.8,0.5))\n    getObjectFromGUID(\"SourceSpirit\").call(\"load\", {obj = self, saved_data = saved_data})\nend",
+      "LuaScriptState": "{\"bonusEnergy\":[],\"thresholds\":[{\"elements\":\"00200000\",\"position\":{\"x\":0.35,\"y\":0,\"z\":0.47}},{\"elements\":\"00200000\",\"position\":{\"x\":0.35,\"y\":0,\"z\":0.58}},{\"elements\":\"00200000\",\"position\":{\"x\":0.35,\"y\":0,\"z\":0.7}},{\"elements\":\"00200000\",\"position\":{\"x\":0.35,\"y\":0,\"z\":0.82}},{\"elements\":\"02000200\",\"position\":{\"x\":-0.56,\"y\":0,\"z\":0.43}},{\"elements\":\"02002000\",\"position\":{\"x\":-0.56,\"y\":0,\"z\":0.54}},{\"elements\":\"02000002\",\"position\":{\"x\":-0.56,\"y\":0,\"z\":0.65}},{\"elements\":\"04000000\",\"position\":{\"x\":-0.56,\"y\":0,\"z\":0.77}}],\"trackElements\":[{\"elements\":\"00100000\",\"position\":{\"x\":-0.5029,\"y\":0,\"z\":-0.4409}},{\"elements\":\"01000000\",\"position\":{\"x\":-0.9582,\"y\":0,\"z\":-0.4409}},{\"elements\":\"01000000\",\"position\":{\"x\":-0.7306,\"y\":0,\"z\":-0.1105}}],\"trackEnergy\":[{\"count\":5,\"position\":{\"x\":-1.1859,\"y\":0,\"z\":-0.4409}},{\"count\":4,\"position\":{\"x\":-0.9582,\"y\":0,\"z\":-0.4409}},{\"count\":3,\"position\":{\"x\":-0.7306,\"y\":0,\"z\":-0.4409}},{\"count\":2,\"position\":{\"x\":-0.2752,\"y\":0,\"z\":-0.4409}},{\"count\":1,\"position\":{\"x\":-0.0475,\"y\":0,\"z\":-0.4409}}]}",
+      "XmlUI": "",
+      "AttachedSnapPoints": [
+        {
+          "Position": {
+            "x": -0.2752,
+            "y": 0.2,
+            "z": -0.4409
+          }
+        },
+        {
+          "Position": {
+            "x": -0.5029,
+            "y": 0.2,
+            "z": -0.4409
+          }
+        },
+        {
+          "Position": {
+            "x": -0.7306,
+            "y": 0.2,
+            "z": -0.4409
+          }
+        },
+        {
+          "Position": {
+            "x": -0.9582,
+            "y": 0.2,
+            "z": -0.4409
+          }
+        },
+        {
+          "Position": {
+            "x": -1.1859,
+            "y": 0.2,
+            "z": -0.4409
+          }
+        },
+        {
+          "Position": {
+            "x": -0.2752,
+            "y": 0.2,
+            "z": -0.1105
+          }
+        },
+        {
+          "Position": {
+            "x": -0.5029,
+            "y": 0.2,
+            "z": -0.1105
+          }
+        },
+        {
+          "Position": {
+            "x": -0.7306,
+            "y": 0.2,
+            "z": -0.1105
+          }
+        },
+        {
+          "Position": {
+            "x": -0.9582,
+            "y": 0.2,
+            "z": -0.1105
+          }
+        },
+        {
+          "Position": {
+            "x": -1.1859,
+            "y": 0.2,
+            "z": -0.1105
+          }
+        }
+      ]
+    }
+  ]
+}
