@@ -1,6 +1,6 @@
 {
   "GUID": "scvngr",
-  "Name": "Custom_Token",
+  "Name": "BlockSquare",
   "Transform": {
     "posX": 0,
     "posY": 0.1,
@@ -15,15 +15,21 @@
   "Nickname": "Scavenger Script Handler",
   "Description": "Invisible script object for Scavenger of Fates scavenging automation. Group/lock this with the spirit panel.",
   "GMNotes": "",
+  "AltLookAngle": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
   "ColorDiffuse": {
-    "r": 0,
-    "g": 0,
-    "b": 0
+    "r": 0.0,
+    "g": 0.0,
+    "b": 0.0,
+    "a": 0.0
   },
   "LayoutGroupSortIndex": 0,
   "Value": 0,
   "Locked": true,
-  "Grid": false,
+  "Grid": true,
   "Snap": false,
   "IgnoreFoW": false,
   "MeasureMovement": false,
@@ -34,16 +40,7 @@
   "GridProjection": false,
   "HideWhenFaceDown": false,
   "Hands": false,
-  "CustomImage": {
-    "ImageURL": "",
-    "ImageSecondaryURL": "",
-    "ImageScalar": 1.0,
-    "WidthScale": 0.0
-  },
   "LuaScript": "--[[\r\n    Scavenger of Fates - Scavenging Automation Script\r\n\r\n    This script lives in an invisible child object attached to the Scavenger of Fates spirit panel.\r\n    It adds a \"Scavenge Token\" context menu option to Beasts, Badlands, Wilds, and Disease tokens,\r\n    allowing any player to send them to the scavenging area on the spirit panel.\r\n\r\n    Setup: This script should be placed in a small invisible object that is grouped/locked\r\n    with the Scavenger of Fates spirit panel.\r\n]]--\r\n\r\n-- Configuration\r\nlocal SCAVENGEABLE_TYPES = {\"Beasts\", \"Badlands\", \"Wilds\", \"Disease\"}\r\nlocal SPIRIT_PANEL_NAME = \"Scavenger of Fates\"\r\nlocal MENU_LABEL = \"Scavenge Token\"\r\n\r\n-- The offset from the spirit panel's center to the upper-left scavenging area\r\n-- These are in local coordinates relative to the panel\r\n-- Adjust these values based on your panel's layout\r\nlocal SCAVENGE_OFFSET = {\r\n    x = -1.0,   -- Left side of panel (negative X in local space)\r\n    y = 0.3,    -- Slightly above the panel surface\r\n    z = -0.8    -- Upper portion of panel (negative Z in local space)\r\n}\r\n\r\n-- Track which objects have been given the context menu\r\nlocal registeredObjects = {}\r\n\r\n-- Reference to the spirit panel (parent object)\r\nlocal spiritPanel = nil\r\n\r\n--[[\r\n    Check if an object is a scavengeable token type\r\n    Uses both name and tag checking for reliability\r\n]]--\r\nfunction isScavengeable(obj)\r\n    if obj == nil then return false end\r\n\r\n    local objName = obj.getName()\r\n\r\n    for _, tokenType in ipairs(SCAVENGEABLE_TYPES) do\r\n        -- Check by name\r\n        if objName == tokenType then\r\n            return true\r\n        end\r\n        -- Check by tag as backup\r\n        if obj.hasTag and obj.hasTag(tokenType) then\r\n            return true\r\n        end\r\n    end\r\n\r\n    return false\r\nend\r\n\r\n--[[\r\n    Find the Scavenger of Fates spirit panel\r\n    First tries to find parent object, then searches all objects\r\n]]--\r\nfunction findSpiritPanel()\r\n    -- Try to get the parent object (if this script is in a child object)\r\n    local parent = self.getAttachments and self.getAttachments()[1]\r\n\r\n    -- Search through all objects for the spirit panel\r\n    for _, obj in ipairs(getObjects()) do\r\n        if obj.getName() == SPIRIT_PANEL_NAME then\r\n            return obj\r\n        end\r\n    end\r\n\r\n    -- If we couldn't find it by name, check if our script object is attached to something\r\n    -- In TTS, when objects are grouped, we can try to find the panel differently\r\n    return nil\r\nend\r\n\r\n--[[\r\n    Calculate the world position for the scavenging area\r\n    Takes into account the panel's position, rotation, and scale\r\n]]--\r\nfunction getScavengePosition()\r\n    if spiritPanel == nil then\r\n        spiritPanel = findSpiritPanel()\r\n    end\r\n\r\n    if spiritPanel == nil then\r\n        -- Fallback: just use the script object's position with an offset\r\n        local selfPos = self.getPosition()\r\n        return {\r\n            x = selfPos.x + SCAVENGE_OFFSET.x,\r\n            y = selfPos.y + SCAVENGE_OFFSET.y,\r\n            z = selfPos.z + SCAVENGE_OFFSET.z\r\n        }\r\n    end\r\n\r\n    local panelPos = spiritPanel.getPosition()\r\n    local panelRot = spiritPanel.getRotation()\r\n    local panelScale = spiritPanel.getScale()\r\n\r\n    -- Convert rotation to radians for calculation\r\n    local rotY = math.rad(panelRot.y)\r\n\r\n    -- Calculate the offset in world space, accounting for panel rotation\r\n    -- The panel is rotated, so we need to rotate our offset accordingly\r\n    local worldOffsetX = (SCAVENGE_OFFSET.x * math.cos(rotY) - SCAVENGE_OFFSET.z * math.sin(rotY)) * panelScale.x\r\n    local worldOffsetZ = (SCAVENGE_OFFSET.x * math.sin(rotY) + SCAVENGE_OFFSET.z * math.cos(rotY)) * panelScale.z\r\n\r\n    return {\r\n        x = panelPos.x + worldOffsetX,\r\n        y = panelPos.y + SCAVENGE_OFFSET.y,\r\n        z = panelPos.z + worldOffsetZ\r\n    }\r\nend\r\n\r\n--[[\r\n    Callback function when \"Scavenge Token\" is selected from context menu\r\n    Moves the clicked object to the scavenging area on the spirit panel\r\n]]--\r\nfunction onScavengeToken(playerColor, position, clickedObject)\r\n    if clickedObject == nil then\r\n        printToColor(\"Error: No object to scavenge.\", playerColor, {1, 0.5, 0})\r\n        return\r\n    end\r\n\r\n    local targetPos = getScavengePosition()\r\n\r\n    -- Add a small random offset to prevent tokens from stacking exactly on top of each other\r\n    local randomOffset = {\r\n        x = (math.random() - 0.5) * 0.5,\r\n        z = (math.random() - 0.5) * 0.5\r\n    }\r\n\r\n    targetPos.x = targetPos.x + randomOffset.x\r\n    targetPos.z = targetPos.z + randomOffset.z\r\n\r\n    -- Move the token smoothly to the scavenging area\r\n    clickedObject.setPositionSmooth(targetPos, false, true)\r\n\r\n    -- Optional: Provide feedback to the player\r\n    local tokenName = clickedObject.getName()\r\n    broadcastToAll(playerColor .. \" scavenged a \" .. tokenName .. \" token.\", {0.8, 0.6, 1})\r\nend\r\n\r\n--[[\r\n    Add the scavenge context menu option to a single object\r\n]]--\r\nfunction addScavengeMenu(obj)\r\n    if obj == nil then return end\r\n\r\n    local guid = obj.getGUID()\r\n\r\n    -- Skip if already registered\r\n    if registeredObjects[guid] then\r\n        return\r\n    end\r\n\r\n    -- Only add to scavengeable token types\r\n    if not isScavengeable(obj) then\r\n        return\r\n    end\r\n\r\n    -- Add the context menu item\r\n    obj.addContextMenuItem(MENU_LABEL, onScavengeToken, false)\r\n    registeredObjects[guid] = true\r\nend\r\n\r\n--[[\r\n    Scan all objects and add context menus to scavengeable tokens\r\n]]--\r\nfunction registerAllTokens()\r\n    for _, obj in ipairs(getObjects()) do\r\n        addScavengeMenu(obj)\r\n    end\r\nend\r\n\r\n--[[\r\n    Event handler: Called when any object is spawned/created\r\n]]--\r\nfunction onObjectSpawn(obj)\r\n    -- Small delay to ensure the object is fully initialized\r\n    Wait.time(function()\r\n        addScavengeMenu(obj)\r\n    end, 0.5)\r\nend\r\n\r\n--[[\r\n    Event handler: Called when an object is destroyed\r\n    Cleans up our tracking table\r\n]]--\r\nfunction onObjectDestroy(obj)\r\n    if obj ~= nil then\r\n        local guid = obj.getGUID()\r\n        if guid and registeredObjects[guid] then\r\n            registeredObjects[guid] = nil\r\n        end\r\n    end\r\nend\r\n\r\n--[[\r\n    Event handler: Called when this script object loads\r\n]]--\r\nfunction onLoad(savedData)\r\n    -- Find the spirit panel\r\n    spiritPanel = findSpiritPanel()\r\n\r\n    if spiritPanel == nil then\r\n        print(\"[Scavenger Script] Warning: Could not find Scavenger of Fates spirit panel.\")\r\n        print(\"[Scavenger Script] The script will still function, but positioning may be off.\")\r\n    else\r\n        print(\"[Scavenger Script] Found spirit panel: \" .. spiritPanel.getName())\r\n    end\r\n\r\n    -- Small delay to ensure all objects are loaded before scanning\r\n    Wait.time(function()\r\n        registerAllTokens()\r\n        print(\"[Scavenger Script] Scavenging automation initialized.\")\r\n    end, 1)\r\nend",
   "LuaScriptState": "",
-  "XmlUI": "",
-  "AttachedDecals": null,
-  "States": null,
-  "ChildObjects": null
+  "XmlUI": ""
 }
