@@ -168,10 +168,23 @@ function onLoad(savedData)
     -- Register the scavenge hotkey (players bind it in Options > Game Keys)
     addHotkey(HOTKEY_LABEL, onScavengeHotkey, true)
 
+    -- Check if this is the first time the script has loaded
+    local isFirstLoad = (savedData == nil or savedData == "")
+
     -- Small delay to ensure all objects are loaded before scanning
     Wait.time(function()
         registerAllTokens()
         print("[Scavenger Script] Scavenging automation initialized.")
-        print("[Scavenger Script] Bind the 'Scavenge Token' hotkey in Options > Game Keys.")
+        if isFirstLoad then
+            print("[Scavenger Script] Tip: Bind 'Scavenge Token' to Ctrl+Click in Options > Game Keys for quick scavenging.")
+        end
     end, 1)
+end
+
+--[[
+    Event handler: Called when the game is saved
+    Saves state so we know the script has been initialized
+]]--
+function onSave()
+    return "initialized"
 end
