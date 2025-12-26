@@ -5,6 +5,8 @@
     It adds a "Scavenge Token" context menu option to Beasts, Badlands, Wilds, and Disease tokens,
     allowing any player to send them to this script object's position on the spirit panel.
 
+    Also registers a hotkey "Scavenge Token" that players can bind in Options > Game Keys.
+
     Setup: Position this object where you want scavenged tokens to land, then group/lock
     it with the Scavenger of Fates spirit panel.
 ]]--
@@ -12,6 +14,7 @@
 -- Configuration
 local SCAVENGEABLE_TYPES = {"Beasts", "Badlands", "Wilds", "Disease"}
 local MENU_LABEL = "Scavenge Token"
+local HOTKEY_LABEL = "Scavenge Token"
 
 -- Track which objects have been given the context menu
 local registeredObjects = {}
@@ -40,13 +43,11 @@ function isScavengeable(obj)
 end
 
 --[[
-    Callback function when "Scavenge Token" is selected from context menu
-    Moves the clicked object to this script object's position
+    Move a token to the scavenging area
 ]]--
-function onScavengeToken(playerColor, position, clickedObject)
-    if clickedObject == nil then
-        printToColor("Error: No object to scavenge.", playerColor, {1, 0.5, 0})
-        return
+function scavengeToken(playerColor, tokenObject)
+    if tokenObject == nil then
+        return false
     end
 
     -- Get this script object's position as the target
@@ -63,11 +64,46 @@ function onScavengeToken(playerColor, position, clickedObject)
     targetPos.y = targetPos.y + 0.5  -- Slightly above to drop onto surface
 
     -- Move the token smoothly to the scavenging area
-    clickedObject.setPositionSmooth(targetPos, false, true)
+    tokenObject.setPositionSmooth(targetPos, false, true)
 
-    -- Optional: Provide feedback to the player
-    local tokenName = clickedObject.getName()
+    -- Provide feedback to the player
+    local tokenName = tokenObject.getName()
     broadcastToAll(playerColor .. " scavenged a " .. tokenName .. " token.", {0.8, 0.6, 1})
+
+    return true
+end
+
+--[[
+    Callback function when "Scavenge Token" is selected from context menu
+    Moves the clicked object to this script object's position
+]]--
+function onScavengeToken(playerColor, position, clickedObject)
+    if clickedObject == nil then
+        printToColor("Error: No object to scavenge.", playerColor, {1, 0.5, 0})
+        return
+    end
+
+    scavengeToken(playerColor, clickedObject)
+end
+
+--[[
+    Hotkey callback - scavenges the object the player is hovering over
+]]--
+function onScavengeHotkey(playerColor, hoveredObject, pointerPosition, isKeyUp)
+    -- Only trigger on key down, not key up
+    if isKeyUp then return end
+
+    if hoveredObject == nil then
+        printToColor("No object under cursor to scavenge.", playerColor, {1, 0.5, 0})
+        return
+    end
+
+    if not isScavengeable(hoveredObject) then
+        printToColor("This object cannot be scavenged.", playerColor, {1, 0.5, 0})
+        return
+    end
+
+    scavengeToken(playerColor, hoveredObject)
 end
 
 --[[
@@ -129,9 +165,13 @@ end
     Event handler: Called when this script object loads
 ]]--
 function onLoad(savedData)
+    -- Register the scavenge hotkey (players bind it in Options > Game Keys)
+    addHotkey(HOTKEY_LABEL, onScavengeHotkey, true)
+
     -- Small delay to ensure all objects are loaded before scanning
     Wait.time(function()
         registerAllTokens()
         print("[Scavenger Script] Scavenging automation initialized.")
+        print("[Scavenger Script] Bind the 'Scavenge Token' hotkey in Options > Game Keys.")
     end, 1)
 end
