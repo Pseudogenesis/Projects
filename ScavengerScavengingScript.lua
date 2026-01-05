@@ -17,7 +17,7 @@ local MENU_LABEL = "Scavenge Token"
 local HOTKEY_LABEL = "Scavenge Token"
 
 -- Transparency settings (0 = invisible, 1 = fully visible)
-local LOCKED_ALPHA = 0.1    -- Nearly transparent when flipped and locked
+local LOCKED_ALPHA = 0.1    -- Nearly transparent when flipped or locked
 local UNLOCKED_ALPHA = 1.0  -- Fully visible when unlocked (for positioning)
 
 -- Track which objects have been given the context menu
@@ -25,11 +25,11 @@ local registeredObjects = {}
 
 --[[
     Update the object's transparency based on locked/flipped state
-    Makes it nearly invisible when flipped and locked for cleaner gameplay
+    Makes it nearly invisible when flipped or locked for cleaner gameplay
 ]]--
 function updateTransparency()
     local color = self.getColorTint()
-    if self.is_face_down and self.locked then
+    if self.is_face_down or self.locked then
         color.a = LOCKED_ALPHA
     else
         color.a = UNLOCKED_ALPHA
@@ -193,12 +193,13 @@ function onLoad(savedData)
     updateTransparency()
 
     -- Periodically check for lock/flip state changes to update transparency
+    -- TTS doesn't have onLock/onFlip events, so we poll at a fast interval
     Wait.time(function()
         Timer.create({
             identifier = self.getGUID() .. "_transparency",
             function_name = "updateTransparency",
             function_owner = self,
-            delay = 0.5,
+            delay = 0.1,  -- Fast polling for near-instant response
             repetitions = 0  -- Repeat forever
         })
     end, 0.1)
