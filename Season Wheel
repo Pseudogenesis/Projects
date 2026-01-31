@@ -1,0 +1,250 @@
+{
+  "SaveName": "",
+  "Date": "",
+  "VersionNumber": "",
+  "GameMode": "",
+  "GameType": "",
+  "GameComplexity": "",
+  "Tags": [],
+  "Gravity": 0.5,
+  "PlayArea": 0.5,
+  "Table": "",
+  "Sky": "",
+  "Note": "",
+  "TabStates": {},
+  "LuaScript": "",
+  "LuaScriptState": "",
+  "XmlUI": "",
+  "ObjectStates": [
+    {
+      "GUID": "44a5df",
+      "Name": "Custom_Tile",
+      "Transform": {
+        "posX": -12.02,
+        "posY": 0.8530991,
+        "posZ": -21.54,
+        "rotX": 9.961605E-10,
+        "rotY": 180.0191,
+        "rotZ": -7.67973152E-09,
+        "scaleX": 2.745636,
+        "scaleY": 1.0,
+        "scaleZ": 2.745636
+      },
+      "Nickname": "Season Wheel - Inspiring Joy",
+      "Description": "Season Elements: Sun and Air",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": false,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "CustomImage": {
+        "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/11501341708858399856/7BDB5DB3811B3EC5A53D497555EE03063B854604/",
+        "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/11501341708858399856/7BDB5DB3811B3EC5A53D497555EE03063B854604/",
+        "ImageScalar": 1.0,
+        "WidthScale": 0.0,
+        "CustomTile": {
+          "Type": 2,
+          "Thickness": 0.2,
+          "Stackable": false,
+          "Stretch": true
+        }
+      },
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": "",
+      "States": {
+        "3": {
+          "GUID": "ad9056",
+          "Name": "Custom_Tile",
+          "Transform": {
+            "posX": 13.1800232,
+            "posY": 0.8530991,
+            "posZ": -19.3000126,
+            "rotX": -1.86346522E-10,
+            "rotY": 180.026077,
+            "rotZ": -2.01642E-09,
+            "scaleX": 2.745636,
+            "scaleY": 1.0,
+            "scaleZ": 2.745636
+          },
+          "Nickname": "Season Wheel - Nurturing Calm",
+          "Description": "Season Elements: Water and Air",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0
+          },
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": false,
+          "CustomImage": {
+            "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/12285631214017510102/8BF4130C6504BB67A9051CC9032FD5642714ACE6/",
+            "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/12285631214017510102/8BF4130C6504BB67A9051CC9032FD5642714ACE6/",
+            "ImageScalar": 1.0,
+            "WidthScale": 0.0,
+            "CustomTile": {
+              "Type": 2,
+              "Thickness": 0.2,
+              "Stackable": false,
+              "Stretch": true
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        "4": {
+          "GUID": "46ddd9",
+          "Name": "Custom_Tile",
+          "Transform": {
+            "posX": 13.1800232,
+            "posY": 0.8530991,
+            "posZ": -19.3000126,
+            "rotX": -4.52543975E-10,
+            "rotY": 180.026077,
+            "rotZ": 6.65982425E-09,
+            "scaleX": 2.745636,
+            "scaleY": 1.0,
+            "scaleZ": 2.745636
+          },
+          "Nickname": "Season Wheel - Engulfing Sorrow",
+          "Description": "Season Elements: Water and Fire",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0
+          },
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": false,
+          "CustomImage": {
+            "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/12201111122851483355/53E8D2AEEE9B2C9562F7C59D1AE142D544012D3E/",
+            "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/12201111122851483355/53E8D2AEEE9B2C9562F7C59D1AE142D544012D3E/",
+            "ImageScalar": 1.0,
+            "WidthScale": 0.0,
+            "CustomTile": {
+              "Type": 2,
+              "Thickness": 0.2,
+              "Stackable": false,
+              "Stretch": true
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        },
+        "1": {
+          "GUID": "b8cefd",
+          "Name": "Custom_Tile",
+          "Transform": {
+            "posX": -12.02,
+            "posY": 0.8530991,
+            "posZ": -21.54,
+            "rotX": 1.82536708E-09,
+            "rotY": 180.0191,
+            "rotZ": -6.02541173E-09,
+            "scaleX": 2.745636,
+            "scaleY": 1.0,
+            "scaleZ": 2.745636
+          },
+          "Nickname": "Season Wheel - Scorching Ire",
+          "Description": "Season Elements: Sun and Fire",
+          "GMNotes": "",
+          "AltLookAngle": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ColorDiffuse": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0
+          },
+          "LayoutGroupSortIndex": 0,
+          "Value": 0,
+          "Locked": false,
+          "Grid": true,
+          "Snap": true,
+          "IgnoreFoW": false,
+          "MeasureMovement": false,
+          "DragSelectable": true,
+          "Autoraise": true,
+          "Sticky": true,
+          "Tooltip": true,
+          "GridProjection": false,
+          "HideWhenFaceDown": false,
+          "Hands": false,
+          "CustomImage": {
+            "ImageURL": "https://steamusercontent-a.akamaihd.net/ugc/14689212639638455356/C918E9D57B38660B0184EB605317F646C8725E24/",
+            "ImageSecondaryURL": "https://steamusercontent-a.akamaihd.net/ugc/14689212639638455356/C918E9D57B38660B0184EB605317F646C8725E24/",
+            "ImageScalar": 1.0,
+            "WidthScale": 0.0,
+            "CustomTile": {
+              "Type": 2,
+              "Thickness": 0.2,
+              "Stackable": false,
+              "Stretch": true
+            }
+          },
+          "LuaScript": "",
+          "LuaScriptState": "",
+          "XmlUI": ""
+        }
+      }
+    }
+  ]
+}
