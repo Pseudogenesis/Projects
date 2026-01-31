@@ -30,7 +30,7 @@
         "scaleY": 1.0,
         "scaleZ": 2.745636
       },
-      "Nickname": "Season Wheel - Inspiring Joy",
+      "Nickname": "Season Indicator - Inspiring Joy",
       "Description": "Season Elements: Sun and Air",
       "GMNotes": "",
       "AltLookAngle": {
@@ -87,7 +87,7 @@
             "scaleY": 1.0,
             "scaleZ": 2.745636
           },
-          "Nickname": "Season Wheel - Nurturing Calm",
+          "Nickname": "Season Indicator - Nurturing Calm",
           "Description": "Season Elements: Water and Air",
           "GMNotes": "",
           "AltLookAngle": {
@@ -144,7 +144,7 @@
             "scaleY": 1.0,
             "scaleZ": 2.745636
           },
-          "Nickname": "Season Wheel - Engulfing Sorrow",
+          "Nickname": "Season Indicator - Engulfing Sorrow",
           "Description": "Season Elements: Water and Fire",
           "GMNotes": "",
           "AltLookAngle": {
@@ -201,7 +201,7 @@
             "scaleY": 1.0,
             "scaleZ": 2.745636
           },
-          "Nickname": "Season Wheel - Scorching Ire",
+          "Nickname": "Season Indicator - Scorching Ire",
           "Description": "Season Elements: Sun and Fire",
           "GMNotes": "",
           "AltLookAngle": {
