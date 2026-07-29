@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1020">
+<title>Flight Deck ✈️</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg2: #131a30;
+    --card: #1a2340;
+    --card2: #232e52;
+    --text: #e8ecf8;
+    --dim: #8b94b8;
+    --accent: #6ea8fe;
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .view { display: none; max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
+  .view.active { display: block; }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .topbar h2 { font-size: 1.25rem; flex: 1; }
+  .back {
+    background: var(--card); color: var(--text); border: none; border-radius: 10px;
+    padding: 8px 14px; font-size: 1rem; cursor: pointer;
+  }
+  .pill {
+    background: var(--card); border-radius: 10px; padding: 6px 12px;
+    font-size: .85rem; color: var(--dim); white-space: nowrap;
+  }
+  .pill b { color: var(--text); }
+  button { font-family: inherit; touch-action: manipulation; }
+  .btn {
+    background: var(--accent); color: #0b1020; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  .btn.ghost { background: var(--card); color: var(--text); }
+  .hint { color: var(--dim); font-size: .85rem; text-align: center; margin-top: 12px; line-height: 1.5; }
+
+  /* ---------- Home ---------- */
+  #home h1 { font-size: 1.6rem; margin: 8px 0 2px; }
+  #home .sub { color: var(--dim); margin-bottom: 20px; }
+  .grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card {
+    background: linear-gradient(160deg, var(--card), var(--bg2));
+    border: 1px solid #2a355c;
+    border-radius: var(--radius); padding: 18px 14px; text-align: left;
+    color: var(--text); cursor: pointer; font-size: 1rem;
+  }
+  .card .emoji { font-size: 1.9rem; display: block; margin-bottom: 8px; }
+  .card .name { font-weight: 600; }
+  .card .desc { color: var(--dim); font-size: .78rem; margin-top: 3px; }
+  .section-label { color: var(--dim); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 10px; }
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ---------- 2048 ---------- */
+  #board2048 {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    background: var(--bg2); border-radius: var(--radius); padding: 8px;
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  .t2048 {
+    aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.5rem; background: var(--card); color: var(--text);
+    transition: transform .08s;
+  }
+  .t2048.pop { transform: scale(1.12); }
+
+  /* ---------- Snake ---------- */
+  #snakeCanvas {
+    width: 100%; aspect-ratio: 1; background: var(--bg2); border-radius: var(--radius);
+    touch-action: none; display: block;
+  }
+  .dpad { display: grid; grid-template-columns: repeat(3, 64px); justify-content: center; gap: 6px; margin-top: 14px; }
+  .dpad button {
+    height: 52px; border-radius: 12px; border: none; background: var(--card);
+    color: var(--text); font-size: 1.3rem; cursor: pointer;
+  }
+  .dpad .blank { visibility: hidden; }
+
+  /* ---------- Minesweeper ---------- */
+  #mineBoard {
+    display: grid; gap: 3px; background: var(--bg2); border-radius: var(--radius);
+    padding: 6px; touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  }
+  .mcell {
+    aspect-ratio: 1; border-radius: 5px; background: var(--card2);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .95rem; border: none; color: var(--text); padding: 0;
+  }
+  .mcell.open { background: var(--bg2); }
+  .mcell.boom { background: var(--bad); }
+  .n1 { color: #6ea8fe; } .n2 { color: #4ade80; } .n3 { color: #f87171; }
+  .n4 { color: #c084fc; } .n5 { color: #fbbf24; } .n6 { color: #2dd4bf; }
+  .n7 { color: #f9a8d4; } .n8 { color: #94a3b8; }
+  .mine-controls { display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+  .mine-controls .btn.on { outline: 2px solid var(--accent); background: var(--card2); color: var(--text); }
+
+  /* ---------- Words ---------- */
+  #wordGrid { display: grid; grid-template-rows: repeat(6, 1fr); gap: 6px; max-width: 320px; margin: 0 auto; }
+  .wrow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .wcell {
+    aspect-ratio: 1; border: 2px solid #2a355c; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700; text-transform: uppercase;
+  }
+  .wcell.hit { background: var(--good); border-color: var(--good); color: #0b1020; }
+  .wcell.near { background: var(--warn); border-color: var(--warn); color: #0b1020; }
+  .wcell.miss { background: var(--card); border-color: var(--card); color: var(--dim); }
+  #kb { margin-top: 16px; user-select: none; -webkit-user-select: none; }
+  .krow { display: flex; justify-content: center; gap: 5px; margin-bottom: 6px; }
+  .key {
+    flex: 1; max-width: 40px; height: 50px; border: none; border-radius: 7px;
+    background: var(--card2); color: var(--text); font-size: .95rem; font-weight: 600;
+    text-transform: uppercase; cursor: pointer;
+  }
+  .key.wide { max-width: 62px; flex: 1.6; font-size: .75rem; }
+  .key.hit { background: var(--good); color: #0b1020; }
+  .key.near { background: var(--warn); color: #0b1020; }
+  .key.miss { background: var(--bg2); color: var(--dim); }
+  #wordMsg { text-align: center; min-height: 1.4em; margin: 10px 0 0; font-weight: 600; }
+
+  /* ---------- Flight timer ---------- */
+  .ft-setup { background: var(--card); border-radius: var(--radius); padding: 18px; }
+  .ft-setup label { display: block; color: var(--dim); font-size: .85rem; margin-bottom: 6px; }
+  .ft-inputs { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .ft-inputs input {
+    width: 80px; padding: 12px; font-size: 1.3rem; text-align: center;
+    background: var(--bg2); border: 1px solid #2a355c; border-radius: 10px; color: var(--text);
+  }
+  #ftLive { text-align: center; }
+  .ft-big { font-size: 2.6rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 10px 0 2px; }
+  .ft-caption { color: var(--dim); font-size: .85rem; }
+  .ft-track {
+    position: relative; height: 14px; background: var(--bg2); border-radius: 999px; margin: 26px 0 8px; overflow: visible;
+  }
+  .ft-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
+  .ft-plane { position: absolute; top: -10px; font-size: 1.4rem; transform: translateX(-50%); }
+  .ft-row { display: flex; justify-content: space-between; margin-top: 18px; }
+  .ft-stat { background: var(--card); border-radius: 10px; padding: 10px 14px; flex: 1; margin: 0 4px; }
+  .ft-stat .v { font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ft-stat .k { color: var(--dim); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ---------- Notes ---------- */
+  #notesArea {
+    width: 100%; min-height: 55vh; background: var(--card); color: var(--text);
+    border: 1px solid #2a355c; border-radius: var(--radius); padding: 14px;
+    font-size: 1rem; line-height: 1.6; resize: vertical; font-family: inherit;
+  }
+
+  /* ---------- Randomizer ---------- */
+  .rand-result { text-align: center; font-size: 4rem; margin: 24px 0; min-height: 1.2em; }
+  .rand-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<div class="view active" id="home">
+  <h1>✈️ Flight Deck</h1>
+  <div class="sub">Your offline in-flight companion. No Wi-Fi needed.</div>
+  <div class="section-label">Games</div>
+  <div class="grid-cards">
+    <button class="card" data-go="v2048"><span class="emoji">🔢</span><span class="name">2048</span><div class="desc">Swipe to merge tiles</div></button>
+    <button class="card" data-go="vsnake"><span class="emoji">🐍</span><span class="name">Snake</span><div class="desc">Classic, swipe to steer</div></button>
+    <button class="card" data-go="vmine"><span class="emoji">💣</span><span class="name">Minesweeper</span><div class="desc">Tap to reveal, hold to flag</div></button>
+    <button class="card" data-go="vword"><span class="emoji">🟩</span><span class="name">Words</span><div class="desc">Guess the 5-letter word</div></button>
+  </div>
+  <div class="section-label">Tools</div>
+  <div class="grid-cards">
+    <button class="card" data-go="vflight"><span class="emoji">🛫</span><span class="name">Flight Timer</span><div class="desc">How much longer?</div></button>
+    <button class="card" data-go="vnotes"><span class="emoji">📝</span><span class="name">Notes</span><div class="desc">Autosaved scratchpad</div></button>
+    <button class="card" data-go="vrand"><span class="emoji">🎲</span><span class="name">Randomizer</span><div class="desc">Coin, dice &amp; picker</div></button>
+  </div>
+  <div class="hint">Everything runs locally in your browser.<br>Scores &amp; notes are saved on this device.</div>
+</div>
+
+<!-- ================= 2048 ================= -->
+<div class="view" id="v2048">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>2048</h2>
+    <span class="pill">Score <b id="s2048">0</b></span>
+    <span class="pill">Best <b id="b2048">0</b></span>
+  </div>
+  <div id="board2048"></div>
+  <div style="text-align:center; margin-top:14px;">
+    <button class="btn ghost" id="new2048">New game</button>
+  </div>
+  <div class="hint">Swipe the board (or use arrow keys) to slide tiles.<br>Matching tiles merge. Reach 2048!</div>
+</div>
+
+<!-- ================= SNAKE ================= -->
+<div class="view" id="vsnake">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Snake</h2>
+    <span class="pill">Score <b id="sSnake">0</b></span>
+    <span class="pill">Best <b id="bSnake">0</b></span>
+  </div>
+  <canvas id="snakeCanvas" width="360" height="360"></canvas>
+  <div class="dpad">
+    <span class="blank"></span><button data-dir="up">▲</button><span class="blank"></span>
+    <button data-dir="left">◀</button><button id="snakeGo">▶︎ Go</button><button data-dir="right">▶</button>
+    <span class="blank"></span><button data-dir="down">▼</button><span class="blank"></span>
+  </div>
+  <div class="hint">Swipe on the board or use the pad. Eat the fruit, don't hit walls or yourself.</div>
+</div>
+
+<!-- ================= MINESWEEPER ================= -->
+<div class="view" id="vmine">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Mines</h2>
+    <span class="pill">💣 <b id="mineLeft">10</b></span>
+    <span class="pill">⏱ <b id="mineTime">0</b></span>
+  </div>
+  <div id="mineBoard"></div>
+  <div class="mine-controls">
+    <button class="btn ghost" id="mineFlagMode">🚩 Flag mode: off</button>
+    <button class="btn ghost" id="mineEasy">Easy</button>
+    <button class="btn ghost" id="mineHard">Hard</button>
+  </div>
+  <div class="hint">Tap to reveal · long-press (or flag mode) to mark mines.<br>Your first tap is always safe.</div>
+</div>
+
+<!-- ================= WORDS ================= -->
+<div class="view" id="vword">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Words</h2>
+    <span class="pill">Streak <b id="wStreak">0</b></span>
+    <span class="pill">Won <b id="wWins">0</b></span>
+  </div>
+  <div id="wordGrid"></div>
+  <div id="wordMsg"></div>
+  <div id="kb"></div>
+  <div style="text-align:center; margin-top:12px;">
+    <button class="btn ghost" id="newWord">New word</button>
+  </div>
+</div>
+
+<!-- ================= FLIGHT TIMER ================= -->
+<div class="view" id="vflight">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Flight Timer</h2>
+  </div>
+  <div class="ft-setup" id="ftSetup">
+    <label>How long is your flight?</label>
+    <div class="ft-inputs">
+      <input type="number" id="ftH" min="0" max="23" value="5" inputmode="numeric"> <span>h</span>
+      <input type="number" id="ftM" min="0" max="59" value="30" inputmode="numeric"> <span>m</span>
+    </div>
+    <button class="btn" id="ftStart">🛫 Wheels up!</button>
+    <div class="hint" style="text-align:left; margin-top:10px;">Tap when you take off (or adjust after — the timer just counts from when you press it).</div>
+  </div>
+  <div id="ftLive" style="display:none;">
+    <div class="ft-caption">Time remaining</div>
+    <div class="ft-big" id="ftRemain">–</div>
+    <div class="ft-caption" id="ftPct"></div>
+    <div class="ft-track">
+      <div class="ft-fill" id="ftFill" style="width:0%"></div>
+      <div class="ft-plane" id="ftPlane" style="left:0%">✈️</div>
+    </div>
+    <div class="ft-row">
+      <div class="ft-stat"><div class="v" id="ftElapsed">–</div><div class="k">Elapsed</div></div>
+      <div class="ft-stat"><div class="v" id="ftArrive">–</div><div class="k">Est. arrival</div></div>
+    </div>
+    <div style="margin-top:20px;"><button class="btn ghost" id="ftReset">Reset</button></div>
+  </div>
+</div>
+
+<!-- ================= NOTES ================= -->
+<div class="view" id="vnotes">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Notes</h2>
+    <span class="pill" id="notesStatus">saved</span>
+  </div>
+  <textarea id="notesArea" placeholder="Trip ideas, packing lists, that screenplay you keep meaning to write…"></textarea>
+</div>
+
+<!-- ================= RANDOMIZER ================= -->
+<div class="view" id="vrand">
+  <div class="topbar">
+    <button class="back" data-go="home">←</button>
+    <h2>Randomizer</h2>
+  </div>
+  <div class="rand-result" id="randResult">🎲</div>
+  <div class="rand-buttons">
+    <button class="btn ghost" data-rand="coin">🪙 Coin</button>
+    <button class="btn ghost" data-rand="d6">🎲 D6</button>
+    <button class="btn ghost" data-rand="d20">🔮 D20</button>
+    <button class="btn ghost" data-rand="pct">💯 1–100</button>
+  </div>
+  <div class="hint">Settle any in-flight debate.</div>
+</div>
+
+<script>
+"use strict";
+/* =============== tiny helpers =============== */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("fd_" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("fd_" + k, JSON.stringify(v)); } catch {} }
+};
+
+/* =============== router =============== */
+const views = document.querySelectorAll(".view");
+function go(id) {
+  views.forEach(v => v.classList.toggle("active", v.id === id));
+  window.scrollTo(0, 0);
+  snake.setActive(id === "vsnake");
+  if (id === "vflight") flight.refresh();
+}
+document.querySelectorAll("[data-go]").forEach(el =>
+  el.addEventListener("click", () => go(el.dataset.go)));
+
+/* generic swipe detector */
+function onSwipe(el, cb) {
+  let sx = 0, sy = 0, live = false;
+  el.addEventListener("touchstart", e => {
+    live = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+  el.addEventListener("touchend", e => {
+    if (!live) return; live = false;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    cb(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+  }, { passive: true });
+}
+
+/* =============== 2048 =============== */
+const g2048 = (() => {
+  const boardEl = $("board2048");
+  let grid, score, best = store.get("best2048", 0), over;
+  $("b2048").textContent = best;
+
+  const COLORS = {
+    2: ["#2a355c", "#e8ecf8"], 4: ["#34406b", "#e8ecf8"], 8: ["#f59e0b", "#0b1020"],
+    16: ["#f97316", "#0b1020"], 32: ["#ef4444", "#fff"], 64: ["#dc2626", "#fff"],
+    128: ["#eab308", "#0b1020"], 256: ["#facc15", "#0b1020"], 512: ["#4ade80", "#0b1020"],
+    1024: ["#22d3ee", "#0b1020"], 2048: ["#a78bfa", "#0b1020"]
+  };
+
+  function reset() {
+    grid = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+    score = 0; over = false;
+    addTile(); addTile(); render();
+  }
+  function addTile() {
+    const empty = [];
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (!grid[r][c]) empty.push([r, c]);
+    if (!empty.length) return;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+  }
+  function slideRow(row) {
+    // slide left + merge; returns [newRow, gained, moved]
+    const vals = row.filter(v => v);
+    let gained = 0;
+    for (let i = 0; i < vals.length - 1; i++) {
+      if (vals[i] === vals[i + 1]) { vals[i] *= 2; gained += vals[i]; vals.splice(i + 1, 1); }
+    }
+    while (vals.length < 4) vals.push(0);
+    const moved = vals.some((v, i) => v !== row[i]);
+    return [vals, gained, moved];
+  }
+  function move(dir) {
+    if (over) return;
+    let moved = false;
+    const get = (i, j) =>
+      dir === "left"  ? grid[i][j] :
+      dir === "right" ? grid[i][3 - j] :
+      dir === "up"    ? grid[j][i] : grid[3 - j][i];
+    const set = (i, j, v) => {
+      if (dir === "left") grid[i][j] = v;
+      else if (dir === "right") grid[i][3 - j] = v;
+      else if (dir === "up") grid[j][i] = v;
+      else grid[3 - j][i] = v;
+    };
+    for (let i = 0; i < 4; i++) {
+      const row = [0, 1, 2, 3].map(j => get(i, j));
+      const [nr, gained, m] = slideRow(row);
+      if (m) { moved = true; for (let j = 0; j < 4; j++) set(i, j, nr[j]); score += gained; }
+    }
+    if (!moved) return;
+    addTile();
+    if (score > best) { best = score; store.set("best2048", best); }
+    if (isStuck()) over = true;
+    render();
+  }
+  function isStuck() {
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      if (!grid[r][c]) return false;
+      if (c < 3 && grid[r][c] === grid[r][c + 1]) return false;
+      if (r < 3 && grid[r][c] === grid[r + 1][c]) return false;
+    }
+    return true;
+  }
+  function render() {
+    boardEl.innerHTML = "";
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      const v = grid[r][c];
+      const d = document.createElement("div");
+      d.className = "t2048";
+      if (v) {
+        d.textContent = v;
+        const [bg, fg] = COLORS[v] || ["#a78bfa", "#0b1020"];
+        d.style.background = bg; d.style.color = fg;
+        if (v >= 1024) d.style.fontSize = "1.1rem";
+        else if (v >= 128) d.style.fontSize = "1.3rem";
+      }
+      boardEl.appendChild(d);
+    }
+    $("s2048").textContent = score;
+    $("b2048").textContent = best;
+    if (over) {
+      const o = document.createElement("div");
+      o.style.cssText = "grid-column:1/-1;text-align:center;padding:8px;color:var(--warn);font-weight:700;";
+      o.textContent = "Game over — tap New game";
+      boardEl.appendChild(o);
+    }
+  }
+  onSwipe(boardEl, move);
+  document.addEventListener("keydown", e => {
+    if (!$("v2048").classList.contains("active")) return;
+    const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+  });
+  $("new2048").addEventListener("click", reset);
+  reset();
+  return {};
+})();
+
+/* =============== SNAKE =============== */
+const snake = (() => {
+  const cv = $("snakeCanvas"), ctx = cv.getContext("2d");
+  const N = 18, CELL = cv.width / N;
+  let body, dir, queue, food, score, timer = null, dead, speed;
+  let best = store.get("bestSnake", 0);
+  $("bSnake").textContent = best;
+
+  function reset() {
+    body = [[8, 9], [7, 9], [6, 9]];
+    dir = "right"; queue = [];
+    score = 0; dead = false; speed = 160;
+    placeFood(); draw(); updateHud();
+  }
+  function placeFood() {
+    do {
+      food = [Math.floor(Math.random() * N), Math.floor(Math.random() * N)];
+    } while (body.some(([x, y]) => x === food[0] && y === food[1]));
+  }
+  function turn(d) {
+    const opp = { up: "down", down: "up", left: "right", right: "left" };
+    const last = queue.length ? queue[queue.length - 1] : dir;
+    if (d !== last && d !== opp[last]) queue.push(d);
+  }
+  function tick() {
+    if (queue.length) dir = queue.shift();
+    const [hx, hy] = body[0];
+    const next =
+      dir === "up" ? [hx, hy - 1] : dir === "down" ? [hx, hy + 1] :
+      dir === "left" ? [hx - 1, hy] : [hx + 1, hy];
+    const willEat = next[0] === food[0] && next[1] === food[1];
+    const tail = willEat ? body : body.slice(0, -1);
+    if (next[0] < 0 || next[0] >= N || next[1] < 0 || next[1] >= N ||
+        tail.some(([x, y]) => x === next[0] && y === next[1])) {
+      dead = true; stop(); draw(); return;
+    }
+    body.unshift(next);
+    if (willEat) {
+      score++;
+      if (score > best) { best = score; store.set("bestSnake", best); }
+      updateHud();
+      placeFood();
+      if (speed > 70) { speed -= 4; restartTimer(); }
+    } else body.pop();
+    draw();
+  }
+  function draw() {
+    ctx.fillStyle = "#131a30"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = "#f87171";
+    ctx.beginPath();
+    ctx.arc((food[0] + .5) * CELL, (food[1] + .5) * CELL, CELL * .38, 0, 7);
+    ctx.fill();
+    body.forEach(([x, y], i) => {
+      ctx.fillStyle = i === 0 ? "#4ade80" : "#22c55e";
+      ctx.beginPath();
+      ctx.roundRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2, 5);
+      ctx.fill();
+    });
+    if (dead || timer === null) {
+      ctx.fillStyle = "rgba(11,16,32,.72)"; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = "#e8ecf8"; ctx.font = "700 26px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText(dead ? "💀 Crashed! Score " + score : "Tap ▶︎ Go to play", cv.width / 2, cv.height / 2);
+    }
+  }
+  function updateHud() { $("sSnake").textContent = score; $("bSnake").textContent = best; }
+  function restartTimer() { clearInterval(timer); timer = setInterval(tick, speed); }
+  function start() { if (dead) reset(); restartTimer(); draw(); }
+  function stop() { clearInterval(timer); timer = null; }
+  function setActive(active) { if (!active) { stop(); draw(); } }
+
+  onSwipe(cv, turn);
+  document.querySelectorAll(".dpad [data-dir]").forEach(b =>
+    b.addEventListener("click", () => { if (timer === null && !dead) start(); turn(b.dataset.dir); }));
+  $("snakeGo").addEventListener("click", start);
+  document.addEventListener("keydown", e => {
+    if (!$("vsnake").classList.contains("active")) return;
+    const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    if (map[e.key]) {
+      e.preventDefault();
+      if (timer === null && !dead) start();
+      turn(map[e.key]);
+    }
+  });
+  reset();
+  return { setActive };
+})();
+
+/* =============== MINESWEEPER =============== */
+const mines = (() => {
+  const boardEl = $("mineBoard");
+  let W, H, M, cells, started, finished, flags, timerId, t0, flagMode = false;
+
+  function setup(w, h, m) {
+    W = w; H = h; M = m;
+    cells = Array.from({ length: W * H }, () => ({ mine: false, open: false, flag: false, n: 0 }));
+    started = false; finished = false; flags = 0;
+    clearInterval(timerId); $("mineTime").textContent = "0";
+    boardEl.style.gridTemplateColumns = `repeat(${W}, 1fr)`;
+    render();
+  }
+  function neighbors(i) {
+    const r = Math.floor(i / W), c = i % W, out = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < H && nc >= 0 && nc < W) out.push(nr * W + nc);
+    }
+    return out;
+  }
+  function plant(safe) {
+    const banned = new Set([safe, ...neighbors(safe)]);
+    let placed = 0;
+    while (placed < M) {
+      const i = Math.floor(Math.random() * W * H);
+      if (banned.has(i) || cells[i].mine) continue;
+      cells[i].mine = true; placed++;
+    }
+    cells.forEach((c, i) => { c.n = neighbors(i).filter(j => cells[j].mine).length; });
+    t0 = Date.now();
+    timerId = setInterval(() => {
+      $("mineTime").textContent = Math.min(999, Math.floor((Date.now() - t0) / 1000));
+    }, 1000);
+  }
+  function reveal(i) {
+    if (finished || cells[i].open || cells[i].flag) return;
+    if (!started) { started = true; plant(i); }
+    const stack = [i];
+    while (stack.length) {
+      const j = stack.pop();
+      const c = cells[j];
+      if (c.open || c.flag) continue;
+      c.open = true;
+      if (c.mine) { lose(j); return; }
+      if (c.n === 0) neighbors(j).forEach(k => { if (!cells[k].open) stack.push(k); });
+    }
+    if (cells.filter(c => c.open).length === W * H - M) win();
+    render();
+  }
+  function toggleFlag(i) {
+    if (finished || cells[i].open) return;
+    if (!started) return; // nothing to flag before first reveal
+    cells[i].flag = !cells[i].flag;
+    flags += cells[i].flag ? 1 : -1;
+    render();
+  }
+  function lose(hit) {
+    finished = true; clearInterval(timerId);
+    cells.forEach(c => { if (c.mine) c.open = true; });
+    render(hit);
+  }
+  function win() {
+    finished = true; clearInterval(timerId);
+    cells.forEach(c => { if (c.mine) c.flag = true; });
+    flags = M;
+    render(null, true);
+  }
+  function render(hit = null, won = false) {
+    $("mineLeft").textContent = M - flags;
+    boardEl.innerHTML = "";
+    cells.forEach((c, i) => {
+      const b = document.createElement("button");
+      b.className = "mcell";
+      if (c.open) {
+        b.classList.add("open");
+        if (c.mine) { b.textContent = "💣"; if (i === hit) b.classList.add("boom"); }
+        else if (c.n) { b.textContent = c.n; b.classList.add("n" + c.n); }
+      } else if (c.flag) b.textContent = "🚩";
+      attachCellEvents(b, i);
+      boardEl.appendChild(b);
+    });
+    if (finished) {
+      const msg = document.createElement("div");
+      msg.style.cssText = "grid-column:1/-1;text-align:center;padding:8px;font-weight:700;color:" +
+        (won ? "var(--good)" : "var(--bad)");
+      msg.textContent = won ? "🎉 Cleared it! Tap Easy/Hard to play again." : "💥 Boom. Tap Easy/Hard to retry.";
+      boardEl.appendChild(msg);
+    }
+  }
+  function attachCellEvents(b, i) {
+    let pressTimer = null, longPressed = false;
+    b.addEventListener("touchstart", () => {
+      longPressed = false;
+      pressTimer = setTimeout(() => { longPressed = true; toggleFlag(i); }, 350);
+    }, { passive: true });
+    b.addEventListener("touchend", e => {
+      clearTimeout(pressTimer);
+      e.preventDefault(); // stop the synthetic click that would double-fire
+      if (!longPressed) tap(i);
+    });
+    b.addEventListener("touchmove", () => clearTimeout(pressTimer), { passive: true });
+    b.addEventListener("click", () => tap(i));           // desktop
+    b.addEventListener("contextmenu", e => { e.preventDefault(); toggleFlag(i); });
+  }
+  function tap(i) { flagMode && started ? toggleFlag(i) : reveal(i); }
+
+  $("mineFlagMode").addEventListener("click", () => {
+    flagMode = !flagMode;
+    $("mineFlagMode").textContent = "🚩 Flag mode: " + (flagMode ? "on" : "off");
+    $("mineFlagMode").classList.toggle("on", flagMode);
+  });
+  $("mineEasy").addEventListener("click", () => setup(9, 9, 10));
+  $("mineHard").addEventListener("click", () => setup(9, 14, 25));
+  setup(9, 9, 10);
+  return {};
+})();
+
+/* =============== WORDS =============== */
+const words = (() => {
+  const ANSWERS = ("about above actor adapt admit adopt after again agent agree ahead alarm album alert alien alike alive alley allow alone along alter amber angel anger angle angry ankle apart apple apply arena argue arise armor aroma array arrow aside asset audio audit avoid awake award aware badge badly baker basic basin batch beach beard beast begin being belly below bench berry birth black blade blame blank blast blaze bleed blend bless blind block bloom blues blunt board boast bonus boost booth bound brain brand brave bread break breed brick bride brief bring broad brown brush build bunch burst cabin cable candy cargo carry catch cause chain chair chalk charm chart chase cheap check cheek cheer chess chest chief child chill choir choke chose civic civil claim clash class clean clear clerk click cliff climb clock close cloth cloud coach coast color comet comic coral corner-less couch could count court cover crack craft crane crash crazy cream crime crisp cross crowd crown crude cruel crush curve cycle daily dairy dance dated dealt death debut delay dense depth diary dirty donor doubt dozen draft drain drama drank dream dress dried drift drill drink drive drove dying eager eagle early earth eight elbow elder elect elite empty enemy enjoy enter entry equal error essay event every exact exist extra fable faint fairy faith false fancy fatal fault favor feast fence ferry fever fiber field fifth fifty fight final first flame flash fleet flesh float flock flood floor flour fluid flute focus foggy force forge forth forty forum found frame fresh front frost fruit fully funny gauge ghost giant given glass globe glory glove going grace grade grain grand grant grape grasp grass grave great green greet grief grill gross group grove grown guard guess guest guide habit happy harsh haste hatch heart heavy hedge hello hence hobby honey honor horse hotel house human humor hurry ideal image imply index inner input irony issue ivory jeans jelly jewel joint judge juice jumbo knife knock known label labor large laser latch later laugh layer learn lease least leave legal lemon level light limit linen liver lobby local logic loose lower loyal lucky lunar lunch lyric magic major maple march match maybe mayor meant medal media melon mercy merge merit metal meter midst might minor minus mixed model moist money month moral motor mound mount mouse mouth movie music naval nerve never newly night noble noise north noted novel nurse ocean offer often olive onion opera orbit order organ other ought ounce outer owner oxide ozone paint panel panic paper party pasta patch pause peace peach pearl pedal penny phase phone photo piano piece pilot pinch pitch pivot pixel pizza place plain plane plant plate plaza plead pluck point polar porch pouch pound power press price pride prime print prior prize proof proud prove pulse pupil queen quest quick quiet quilt quite quota quote radar radio raise rally ranch range rapid ratio reach react ready realm rebel refer reign relax relay reply resin rhyme rider ridge rifle right rigid risky rival river roast robin robot rocky roast rough round route royal rural saint salad salon sauce scale scarf scene scent scope score scout scrap seize sense serve seven shade shaft shake shall shame shape share sharp sheep sheet shelf shell shift shine shirt shock shore short shout shown sight silky simple-less since sixth sixty skill skirt slate sleep slice slide slope small smart smell smile smoke snack solar solid solve sonic sound south space spare spark speak speed spell spend spice spike spine spoke sport spray spread-less stack staff stage stain stair stake stand stare start state steam steel steep steer stern stick stiff still sting stock stone stood store storm story stout stove strap straw strip stuck study stuff style sugar suite sunny super surge swear sweat sweet swift swing sword syrup table taken taste teach tempo tenth thank theme there these thick thief thing think third thorn those three throw thumb tiger tight timer title toast today token topic torch total touch tough tower toxic trace track trade trail train trait treat trend trial tribe trick troop truck truly trunk trust truth tulip tutor twice twist under union unite unity until upper urban usage usual valid value vapor vault venue verse video vigor villa vinyl viral virus visit vital vivid vocal voice voter wagon waist watch water weave wedge weigh weird whale wheat wheel where which while white whole windy wiser witch woman world worry worth would wound woven wrist write wrong yacht yeast yield young youth zebra zesty")
+    .split(/\s+/).filter(w => w.length === 5 && !w.includes("-"));
+  const gridEl = $("wordGrid"), kbEl = $("kb"), msgEl = $("wordMsg");
+  let answer, guesses, cur, done;
+  let stats = store.get("wordStats", { wins: 0, streak: 0 });
+
+  function updateHud() { $("wWins").textContent = stats.wins; $("wStreak").textContent = stats.streak; }
+  function reset() {
+    answer = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+    guesses = []; cur = ""; done = false;
+    msgEl.textContent = ""; msgEl.style.color = "";
+    render();
+  }
+  function evaluate(guess) {
+    // two-pass so duplicate letters color correctly
+    const res = Array(5).fill("miss");
+    const pool = {};
+    for (let i = 0; i < 5; i++) {
+      if (guess[i] === answer[i]) res[i] = "hit";
+      else pool[answer[i]] = (pool[answer[i]] || 0) + 1;
+    }
+    for (let i = 0; i < 5; i++) {
+      if (res[i] === "hit") continue;
+      if (pool[guess[i]]) { res[i] = "near"; pool[guess[i]]--; }
+    }
+    return res;
+  }
+  function submit() {
+    if (done) return;
+    if (cur.length < 5) { flash("Need 5 letters"); return; }
+    guesses.push(cur);
+    const won = cur === answer;
+    cur = "";
+    if (won) {
+      done = true; stats.wins++; stats.streak++;
+      store.set("wordStats", stats);
+      msgEl.textContent = "🎉 Nailed it!";
+      msgEl.style.color = "var(--good)";
+    } else if (guesses.length === 6) {
+      done = true; stats.streak = 0;
+      store.set("wordStats", stats);
+      msgEl.textContent = "The word was “" + answer.toUpperCase() + "”";
+      msgEl.style.color = "var(--warn)";
+    }
+    updateHud(); render();
+  }
+  function flash(t) {
+    msgEl.textContent = t; msgEl.style.color = "var(--warn)";
+    setTimeout(() => { if (!done) msgEl.textContent = ""; }, 1200);
+  }
+  function keyState() {
+    const state = {};
+    const rank = { miss: 1, near: 2, hit: 3 };
+    guesses.forEach(g => {
+      const res = evaluate(g);
+      for (let i = 0; i < 5; i++) {
+        const L = g[i];
+        if (!state[L] || rank[res[i]] > rank[state[L]]) state[L] = res[i];
+      }
+    });
+    return state;
+  }
+  function render() {
+    gridEl.innerHTML = "";
+    for (let r = 0; r < 6; r++) {
+      const row = document.createElement("div");
+      row.className = "wrow";
+      const g = guesses[r];
+      const res = g ? evaluate(g) : null;
+      const activeRow = r === guesses.length && !done;
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement("div");
+        cell.className = "wcell";
+        if (g) { cell.textContent = g[c]; cell.classList.add(res[c]); }
+        else if (activeRow && cur[c]) cell.textContent = cur[c];
+        row.appendChild(cell);
+      }
+      gridEl.appendChild(row);
+    }
+    const state = keyState();
+    kbEl.innerHTML = "";
+    ["qwertyuiop", "asdfghjkl", "⏎zxcvbnm⌫"].forEach(rowStr => {
+      const row = document.createElement("div");
+      row.className = "krow";
+      [...rowStr].forEach(ch => {
+        const k = document.createElement("button");
+        k.className = "key";
+        if (ch === "⏎") { k.textContent = "enter"; k.classList.add("wide"); k.onclick = submit; }
+        else if (ch === "⌫") { k.textContent = "⌫"; k.classList.add("wide"); k.onclick = () => { cur = cur.slice(0, -1); render(); }; }
+        else {
+          k.textContent = ch;
+          if (state[ch]) k.classList.add(state[ch]);
+          k.onclick = () => { if (!done && cur.length < 5) { cur += ch; render(); } };
+        }
+        row.appendChild(k);
+      });
+      kbEl.appendChild(row);
+    });
+  }
+  document.addEventListener("keydown", e => {
+    if (!$("vword").classList.contains("active")) return;
+    if (e.key === "Enter") submit();
+    else if (e.key === "Backspace") { cur = cur.slice(0, -1); render(); }
+    else if (/^[a-zA-Z]$/.test(e.key) && !done && cur.length < 5) { cur += e.key.toLowerCase(); render(); }
+  });
+  $("newWord").addEventListener("click", reset);
+  updateHud(); reset();
+  return {};
+})();
+
+/* =============== FLIGHT TIMER =============== */
+const flight = (() => {
+  let ticker = null;
+  function fmt(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+                 : `${m}:${String(sec).padStart(2, "0")}`;
+  }
+  function refresh() {
+    const f = store.get("flight", null);
+    clearInterval(ticker); ticker = null;
+    if (!f) {
+      $("ftSetup").style.display = ""; $("ftLive").style.display = "none";
+      return;
+    }
+    $("ftSetup").style.display = "none"; $("ftLive").style.display = "";
+    const update = () => {
+      const now = Date.now();
+      const elapsed = now - f.start;
+      const remain = f.durationMs - elapsed;
+      const pct = Math.min(100, Math.max(0, (elapsed / f.durationMs) * 100));
+      $("ftRemain").textContent = remain <= 0 ? "🛬 Landed!" : fmt(remain);
+      $("ftPct").textContent = pct.toFixed(0) + "% of the way there";
+      $("ftFill").style.width = pct + "%";
+      $("ftPlane").style.left = pct + "%";
+      $("ftElapsed").textContent = fmt(elapsed);
+      $("ftArrive").textContent = new Date(f.start + f.durationMs)
+        .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    };
+    update();
+    ticker = setInterval(update, 1000);
+  }
+  $("ftStart").addEventListener("click", () => {
+    const h = parseInt($("ftH").value, 10) || 0;
+    const m = parseInt($("ftM").value, 10) || 0;
+    const durationMs = (h * 3600 + m * 60) * 1000;
+    if (durationMs <= 0) return;
+    store.set("flight", { start: Date.now(), durationMs });
+    refresh();
+  });
+  $("ftReset").addEventListener("click", () => {
+    localStorage.removeItem("fd_flight");
+    refresh();
+  });
+  return { refresh };
+})();
+
+/* =============== NOTES =============== */
+(() => {
+  const area = $("notesArea"), status = $("notesStatus");
+  area.value = store.get("notes", "");
+  let t;
+  area.addEventListener("input", () => {
+    status.textContent = "typing…";
+    clearTimeout(t);
+    t = setTimeout(() => { store.set("notes", area.value); status.textContent = "saved"; }, 400);
+  });
+})();
+
+/* =============== RANDOMIZER =============== */
+(() => {
+  const out = $("randResult");
+  const roll = kind => {
+    if (kind === "coin") return Math.random() < 0.5 ? "🪙 Heads" : "🪙 Tails";
+    if (kind === "d6") return "🎲 " + (1 + Math.floor(Math.random() * 6));
+    if (kind === "d20") return "🔮 " + (1 + Math.floor(Math.random() * 20));
+    return "💯 " + (1 + Math.floor(Math.random() * 100));
+  };
+  document.querySelectorAll("[data-rand]").forEach(b =>
+    b.addEventListener("click", () => {
+      let n = 0;
+      const spin = setInterval(() => {
+        out.textContent = roll(b.dataset.rand);
+        if (++n >= 8) clearInterval(spin);
+      }, 60);
+    }));
+})();
+</script>
+</body>
+</html>
